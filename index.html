@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#080d13">
+<title>Aqwat — Training Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<a class="skip" href="#main" data-t="skip">Skip to content</a>
+
+<!-- ============ ENTRY GATE ============ -->
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gatebox">
+    <div class="glogo" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5cc7c2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22a7 7 0 0 0 7-7c0-4-7-13-7-13S5 11 5 15a7 7 0 0 0 7 7z"/></svg></div>
+    <h2 id="gateTitle">Aqwat Platform Access</h2>
+    <p class="gsub" id="gateSub"></p>
+    <div class="gfield">
+      <label for="gateName" id="gateNameL">Your name</label>
+      <input id="gateName" type="text" maxlength="40" autocomplete="off">
+    </div>
+    <div class="roles" id="roleGrid" role="radiogroup" aria-labelledby="gateSub">
+      <button class="role" data-role="fcm_eng" role="radio" aria-checked="false">
+        <span class="rico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5cc7c2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span>
+        <h4 id="rFcmN">FCM Engineer</h4><span class="rc">FCM</span><p id="rFcmD"></p>
+      </button>
+      <button class="role" data-role="foe_eng" role="radio" aria-checked="false">
+        <span class="rico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2ee06a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h18M5 17V9l4-4 3 3 4-2 3 3v8"/><circle cx="8" cy="20" r="1"/><circle cx="16" cy="20" r="1"/></svg></span>
+        <h4 id="rFoeN">FOE Engineer</h4><span class="rc">FOE</span><p id="rFoeD"></p>
+      </button>
+      <button class="role" data-role="supervisor" role="radio" aria-checked="false">
+        <span class="rico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9d7bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7z"/><path d="m9 12 2 2 4-4"/></svg></span>
+        <h4 id="rSupN">Supervisor</h4><span class="rc rc-sup" id="rSupC">ALL ACCESS</span><p id="rSupD"></p>
+      </button>
+    </div>
+    <button id="gateEnter" disabled>Enter platform</button>
+    <p class="gatehint" id="gateHint"></p>
+  </div>
+</div>
+
+<header>
+  <div class="brand">
+    <div><h1>Aqwat</h1><div class="sub" id="brandSub">Training Platform</div></div>
+  </div>
+  <nav class="mainnav" aria-label="Main">
+    <button class="navbtn on" data-view="home" data-t="navHome">Modules</button>
+    <button class="navbtn" data-view="dash" data-t="navDash">Dashboard</button>
+    <button class="navbtn" data-view="insights" data-t="navInsights">Insights</button>
+    <button class="navbtn" data-view="maint" data-t="navMaint">Maintenance</button>
+  </nav>
+  <div class="spacer"></div>
+  <div class="clock" aria-hidden="true"><div id="clkTop">--:--:--</div><div><span id="clkPhaseL">PHASE</span> <b id="clkPhase">—</b></div></div>
+  <button class="userchip" id="userChip">
+    <span class="av" id="uAv" aria-hidden="true">?</span>
+    <span class="uinfo"><span class="un" id="uName">—</span><br><span class="ur" id="uRole">—</span></span>
+  </button>
+  <div class="langtog" id="langTog" role="group" aria-label="Language">
+    <button data-lang="en" class="on" aria-pressed="true">EN</button>
+    <button data-lang="ar" aria-pressed="false">ع</button>
+  </div>
+</header>
+
+<main class="stage" id="main">
+
+  <!-- ============ HOME VIEW ============ -->
+  <section id="view-home">
+    <div class="hero">
+      <div class="kick" id="heroKick"></div>
+      <h2 id="heroTitle"></h2>
+      <p id="heroLede"></p>
+      <div class="opsstrip">
+        <div class="live" id="opsLive"><span class="pdot" aria-hidden="true"></span><span id="opsLiveText">—</span></div>
+        <div class="vsep" aria-hidden="true"></div>
+        <div class="prog">
+          <div class="pk"><span id="progL"></span><b id="progV">0 / 0</b></div>
+          <div class="pbar" role="progressbar" aria-labelledby="progL" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progBar"><div class="pfill" id="progFill"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button class="fbtn on all" data-f="all"><span class="d" aria-hidden="true"></span><span data-t="fAll">All</span></button>
+      <button class="fbtn fcm" data-f="fcm"><span class="d" aria-hidden="true"></span>FCM</button>
+      <button class="fbtn foe" data-f="foe"><span class="d" aria-hidden="true"></span>FOE</button>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8296ac" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+        <input id="searchBox" type="search" autocomplete="off" aria-label="Search modules">
+      </div>
+      <button class="fbtn" id="contentSearchBtn" aria-label="Search all content">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+        <span data-t="searchTitle">Search all content</span>
+      </button>
+    </div>
+
+    <div id="pinWrap" hidden>
+      <div class="sectitle"><span data-t="pinned">Pinned</span></div>
+      <div class="pinrow" id="pinRow"></div>
+    </div>
+
+    <div class="sectitle"><span data-t="allSystems">All modules</span></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- ============ DASHBOARD VIEW ============ -->
+  <section id="view-dash" hidden>
+    <div class="hero">
+      <div class="kick" id="dashKick"></div>
+      <h2 id="dashTitle"></h2>
+      <p id="dashLede"></p>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="kpigrid" id="kpiGrid"></div>
+
+    <!-- continue + streak -->
+    <div class="dashsplit">
+      <div class="continuecard" id="continueCard" hidden>
+        <div class="cc-k" id="continueL"></div>
+        <div class="cc-row">
+          <div class="ico" id="continueIco" aria-hidden="true"></div>
+          <div class="cc-info"><h4 id="continueName">—</h4><span id="continueDept"></span></div>
+          <button class="cc-go" id="continueBtn"></button>
+        </div>
+      </div>
+      <div class="streakcard">
+        <div class="streak-flame" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffb02e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3 4 4 4 8a4 4 0 0 1-8 0c0-1 .5-2 1-3 .5 2 2 2 2 2 .5-3-1-5 1-7z"/><path d="M8 14a4 4 0 0 0 8 0"/></svg>
+        </div>
+        <div><b id="streakN">0</b><span id="streakL"></span></div>
+      </div>
+    </div>
+
+    <div class="sectitle"><span id="recentL"></span></div>
+    <div class="pinrow" id="recentRow"></div>
+
+    <!-- completion ring + cert -->
+    <div class="dashtop">
+      <div class="ringcard">
+        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="52" class="ring-bg"/>
+          <circle cx="60" cy="60" r="52" class="ring-fg" id="ringFg"/>
+        </svg>
+        <div class="ringtxt"><b id="ringPct">0%</b><span id="ringL"></span></div>
+      </div>
+      <div class="dashstats">
+        <div class="dstat"><span class="dk" id="dsModulesL"></span><b id="dsModules">0/0</b></div>
+        <div class="dstat"><span class="dk" id="dsQuizL"></span><b id="dsQuiz">0/0</b></div>
+        <div class="dstat"><span class="dk" id="dsAvgL"></span><b id="dsAvg">—</b></div>
+        <button id="certBtn" class="certbtn" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="m8.5 14-2 7 5.5-3 5.5 3-2-7"/></svg>
+          <span id="certBtnL">Download certificate (PDF)</span>
+        </button>
+        <p class="certhint" id="certHint"></p>
+      </div>
+    </div>
+    <div class="sectitle"><span id="dashListL"></span></div>
+    <div class="dashlist" id="dashList"></div>
+  </section>
+
+  <!-- ============ INSIGHTS VIEW ============ -->
+  <section id="view-insights" hidden>
+    <div class="hero">
+      <div class="kick" id="insightsKick"></div>
+      <h2 id="insightsTitle"></h2>
+      <p id="insightsLede"></p>
+    </div>
+
+    <div class="insightgrid">
+      <div class="panel">
+        <div class="panel-h"><span id="weakTitle"></span></div>
+        <div id="weakList"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><span id="recTitle"></span></div>
+        <div id="recList"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span id="weeklyTitle"></span></div>
+      <div id="weeklyChart" class="weeklychart"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span id="heatTitle"></span></div>
+      <div id="heatmap" class="heatmap"></div>
+    </div>
+
+    <!-- Equipment KPI dashboard -->
+    <div class="hero" style="margin-top:var(--sp-8)">
+      <div class="kick" id="eqKick"></div>
+      <h2 id="eqTitle" style="font-size:var(--fs-h3)"></h2>
+      <p id="eqLede"></p>
+    </div>
+    <div class="eqsummary" id="eqSummary"></div>
+    <div class="eqgrid" id="eqGrid"></div>
+  </section>
+
+  <!-- ============ MAINTENANCE VIEW ============ -->
+  <section id="view-maint" hidden>
+    <div class="hero">
+      <div class="kick" id="maintKick"></div>
+      <h2 id="maintTitle"></h2>
+      <p id="maintLede"></p>
+    </div>
+    <div class="maintadd">
+      <input id="maintInput" type="text" maxlength="120" aria-label="task">
+      <select id="maintModule" aria-label="module"></select>
+      <select id="maintPrio" aria-label="priority">
+        <option value="low"></option><option value="med" selected></option><option value="high"></option>
+      </select>
+      <button id="maintAddBtn" class="cc-go"></button>
+    </div>
+    <div class="maintcounts" id="maintCounts"></div>
+    <div class="maintlist" id="maintList"></div>
+  </section>
+</main>
+
+<!-- ============ MODULE VIEWER ============ -->
+<div id="viewer" role="dialog" aria-modal="true" aria-labelledby="vtitle">
+  <div id="vbar">
+    <button id="vback"><span id="vbackArrow" aria-hidden="true">←</span> <span data-t="back">Back</span></button>
+    <div id="vtitle">—</div>
+    <div class="spacer"></div>
+    <button id="vquiz" class="quizbtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+      <span data-t="takeQuiz">Take quiz</span>
+    </button>
+    <button id="vpractice" class="quizbtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      <span data-t="practiceStart">Guided practice</span>
+    </button>
+  </div>
+  <iframe id="vframe" title="Training module" loading="lazy"></iframe>
+  <div id="vload"><div><div class="sp" aria-hidden="true"></div><span data-t="loading">Loading module…</span></div></div>
+</div>
+
+<!-- ============ QUIZ OVERLAY (built by quiz.js) ============ -->
+<div id="quizWrap" role="dialog" aria-modal="true" hidden></div>
+
+<!-- ============ CONTENT SEARCH OVERLAY ============ -->
+<div id="searchOverlay" role="dialog" aria-modal="true" aria-labelledby="soTitle" hidden>
+  <div class="sobox">
+    <div class="soh">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8296ac" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+      <input id="soInput" type="search" autocomplete="off">
+      <button class="qclose" id="soClose" aria-label="Close">✕</button>
+    </div>
+    <div id="soResults" class="soresults"></div>
+  </div>
+</div>
+
+<!-- ============ CONTENT ASSISTANT ============ -->
+<button id="assistFab" aria-label="Content assistant">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 1 7 7c0 2-1 3.5-2.5 5L16 21l-4-2-4 2 -.5-6C6 13.5 5 12 5 10a7 7 0 0 1 7-7z"/><circle cx="9.5" cy="10" r="1"/><circle cx="14.5" cy="10" r="1"/></svg>
+</button>
+<div id="assistPanel" role="dialog" aria-modal="true" aria-labelledby="apTitle" hidden>
+  <div class="ap-h">
+    <b id="apTitle"></b>
+    <button class="qclose" id="apClose" aria-label="Close">✕</button>
+  </div>
+  <p class="ap-intro" id="apIntro"></p>
+  <div class="ap-body" id="apBody"></div>
+  <div class="ap-input">
+    <input id="apInput" type="text" autocomplete="off">
+    <button id="apSend" class="cc-go"></button>
+  </div>
+  <p class="ap-disclaim" id="apDisclaim"></p>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<footer id="footer">AQWAT · TRAINING PLATFORM · FCM + FOE</footer>
+
+<script src="js/store.js" defer></script>
+<script src="js/i18n.js" defer></script>
+<script src="js/registry.js" defer></script>
+<script src="js/quiz-data.js" defer></script>
+<script src="js/quiz.js" defer></script>
+<script src="js/cert.js" defer></script>
+<script src="js/search.js" defer></script>
+<script src="js/analytics.js" defer></script>
+<script src="js/assistant.js" defer></script>
+<script src="js/maintenance.js" defer></script>
+<script src="js/practice.js" defer></script>
+<script src="js/equipment.js" defer></script>
+<script src="js/app.js" defer></script>
+</body>
+</html>
