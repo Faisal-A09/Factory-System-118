@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hatchback — HVAC Units &amp; Refrigerants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#0a0f16; --bg1:#0f1923; --bg2:#16232f; --bg3:#1c2c3a;
+  --line:#22384a; --line2:#2c4659;
+  --txt:#d7e3ee; --muted:#7f95a8; --dim:#5c7081;
+  --accent:#27c6ff; --accent2:#0e9fd6;
+  /* refrigerant color coding */
+  --r407:#f5a623; --r410:#37b6ff; --r507:#b06bdc; --r404:#2ee06a; --free:#1ee0e0;
+  --shadow:0 8px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg0);color:var(--txt);font-family:'Inter',system-ui,sans-serif;
+  font-size:14px;-webkit-font-smoothing:antialiased;line-height:1.6}
+.mono,.tag{font-family:'Rajdhani','Inter',monospace;font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+
+/* ---- header ---- */
+header{padding:30px 24px 22px;background:linear-gradient(180deg,#0f1c28,#0b141d);
+  border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+header .glow{position:absolute;inset:0;background:radial-gradient(600px 200px at 20% 0%,rgba(39,198,255,.10),transparent 70%);pointer-events:none}
+.brand{display:flex;align-items:center;gap:13px;position:relative}
+.logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#0c6fa0);
+  display:grid;place-items:center;font-family:'Rajdhani';font-weight:700;color:#03222e;font-size:15px;
+  box-shadow:0 0 18px rgba(39,198,255,.4)}
+.brand h1{font-size:20px;font-weight:700;letter-spacing:.3px}
+.brand small{display:block;color:var(--muted);font-size:11px;font-family:'Rajdhani';letter-spacing:1.5px;margin-top:2px}
+.lead{max-width:760px;margin:16px 0 0;color:var(--muted);font-size:14px;position:relative}
+
+/* ---- refrigerant legend ---- */
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;position:relative}
+.legend .chip{display:flex;align-items:center;gap:7px;background:var(--bg1);border:1px solid var(--line);
+  border-radius:20px;padding:5px 12px;font-family:'Rajdhani';font-size:12.5px;letter-spacing:.4px}
+.legend .chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* ---- grid ---- */
+main{max-width:1180px;margin:0 auto;padding:26px 20px 60px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+.card{background:linear-gradient(180deg,#0e1a25,#0b141d);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:.18s;position:relative}
+.card:hover{border-color:var(--line2);transform:translateY(-2px)}
+.card .ill{height:158px;background:radial-gradient(120% 120% at 50% 0%,#11202d,#0a131c);
+  border-bottom:1px solid var(--line);display:grid;place-items:center;position:relative}
+.card .ill svg{width:100%;height:100%;display:block}
+.rtag{position:absolute;top:11px;right:11px;font-family:'Rajdhani';font-weight:700;font-size:12.5px;
+  letter-spacing:.6px;padding:4px 10px;border-radius:8px;color:#06141c;display:flex;align-items:center;gap:5px}
+.body{padding:14px 15px 16px;display:flex;flex-direction:column;gap:7px;flex:1}
+.body h3{font-size:16px;font-weight:700;font-family:'Rajdhani';letter-spacing:.4px;display:flex;align-items:baseline;gap:8px}
+.body h3 .ab{font-size:11px;color:var(--dim);font-weight:600;letter-spacing:.5px}
+.body .role{font-size:11px;color:var(--accent);font-family:'Rajdhani';letter-spacing:1px;text-transform:uppercase}
+.body p{font-size:13px;color:#c2d2e0;margin-top:1px}
+.purpose{margin-top:auto;padding-top:10px;border-top:1px solid rgba(34,56,74,.6);font-size:12.5px;color:var(--muted)}
+.purpose b{color:var(--txt);font-weight:600}
+
+.note{margin-top:26px;background:var(--bg1);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:10px;padding:14px 16px;font-size:12.5px;color:var(--muted);line-height:1.7}
+.note b{color:var(--txt)}
+
+@media(max-width:560px){
+  header{padding:22px 16px 18px}
+  .brand h1{font-size:18px}
+  main{padding:18px 14px 50px}
+  .grid{grid-template-columns:1fr;gap:14px}
+}
+@media(prefers-reduced-motion:reduce){.card,.card:hover{transition:none;transform:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="glow"></div>
+  <div class="brand">
+    <div class="logo">HB</div>
+    <div><h1>Hatchback — Air-Conditioning Units</h1>
+      <small>REFLECTION SECTION · DEVICES &amp; REFRIGERANTS</small></div>
+  </div>
+  <p class="lead">The air-conditioning and cooling units that serve the Hatchback area. Each card explains what the
+  unit is, what it does, and which refrigerant it runs on. Colors below map each refrigerant to its units.</p>
+  <div class="legend">
+    <span class="chip"><i style="background:var(--r407)"></i>R-407</span>
+    <span class="chip"><i style="background:var(--r410)"></i>R-410</span>
+    <span class="chip"><i style="background:var(--r507)"></i>R-507</span>
+    <span class="chip"><i style="background:var(--r404)"></i>R-404</span>
+    <span class="chip"><i style="background:var(--free)"></i>Freon-free · Galco</span>
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+
+  <div class="note">
+    <b>About the refrigerants.</b> Each unit is tagged with the refrigerant it uses so technicians can match the
+    right gas and tools to the right equipment during service. The <b>FAU</b> is the exception — it carries no Freon
+    at all and instead air-cools using a flow of cold <b>Galco</b>. A full cross-section refrigerant map is available
+    from the <b>Refrigerant Index</b> in the main Aqwat menu.
+  </div>
+</main>
+
+<script>
+/* ---- Hatchback device data ---- */
+const REF={
+  'R-407':{c:'var(--r407)'},'R-410':{c:'var(--r410)'},'R-507':{c:'var(--r507)'},
+  'R-404':{c:'var(--r404)'},'Freon-free':{c:'var(--free)'}
+};
+const DEVICES=[
+  {id:'ahu', name:'AHU', full:'Air Handling Unit', ref:'R-407', role:'Central air conditioning',
+   desc:'A large central box that pulls in air, filters it, cools it over a coil, then pushes it through ducts to several rooms at once.',
+   purpose:'Conditions and distributes air for a whole zone from one central unit.'},
+  {id:'pkg', name:'Package Unit', full:'Packaged AC Unit', ref:'R-407', role:'All-in-one rooftop AC',
+   desc:'A single self-contained box — compressor, coil and fan all in one — usually mounted on the roof or a slab, supplying cooled air directly.',
+   purpose:'Cools an area as a complete stand-alone unit with no separate indoor/outdoor split.'},
+  {id:'split', name:'Split Unit', full:'Split Air Conditioner', ref:'R-410', role:'Room cooling',
+   desc:'Two parts: an indoor unit that blows cold air and an outdoor condenser, joined by refrigerant pipes. The common wall-mounted AC.',
+   purpose:'Cools a single room or small space quietly and efficiently.'},
+  {id:'cs3', name:'Cold Store — 3rd Floor', full:'Cold Storage Room (3rd Floor)', ref:'R-507', role:'Low-temperature storage',
+   desc:'An insulated room kept at low temperature by an evaporator inside and a condensing unit outside, holding goods cold.',
+   purpose:'Keeps stored products cold/frozen on the 3rd floor.'},
+  {id:'csg', name:'Ground Floor Cold Store', full:'Cold Storage Room (Ground Floor)', ref:'R-404', role:'Low-temperature storage',
+   desc:'An insulated cold room on the ground floor, cooled by a refrigeration unit that maintains a steady low temperature.',
+   purpose:'Keeps stored products cold/frozen at ground level.'},
+  {id:'fcu', name:'FCU', full:'Fan Coil Unit', ref:'R-410', role:'Local air cooling',
+   desc:'A small unit with a fan and a coil that blows air across the cold coil to cool the space around it — often above a ceiling or on a wall.',
+   purpose:'Provides local cooling for a single room or area.'},
+  {id:'crac', name:'CRAC', full:'Computer Room Air Conditioner', ref:'R-407', role:'Precision server cooling',
+   desc:'A precision air conditioner built for server and equipment rooms, holding tight temperature and humidity so electronics stay safe.',
+   purpose:'Protects IT/equipment rooms with stable, precise cooling.'},
+  {id:'fau', name:'FAU', full:'Fresh Air Unit', ref:'Freon-free', role:'Freon-free fresh-air cooling',
+   desc:'Brings in fresh outside air and cools it. Unlike the others it uses no Freon at all — it air-cools with a flow of cold Galco instead.',
+   purpose:'Supplies cooled fresh air without any Freon, using cold Galco flow.'},
+];
+
+/* ---- bespoke SVG illustrations (one per device type) ---- */
+function svg(id){
+  const C={r407:'#f5a623',r410:'#37b6ff',r507:'#b06bdc',r404:'#2ee06a',free:'#1ee0e0'};
+  const base='stroke="#3a566b" stroke-width="2" fill="none"';
+  const M={
+    ahu:`<svg viewBox="0 0 300 158"><g ${base}>
+      <rect x="40" y="42" width="150" height="74" rx="6" fill="#11212e"/>
+      <line x1="70" y1="42" x2="70" y2="116"/><line x1="100" y1="42" x2="100" y2="116"/>
+      <path d="M104 50 v60 M112 50 v60 M120 50 v60 M128 50 v60" stroke="${C.r407}" stroke-width="3"/>
+      <circle cx="158" cy="79" r="20"/><path d="M158 79 L158 61 M158 79 L174 88 M158 79 L142 88" stroke="${C.r407}"/>
+      <rect x="190" y="60" width="70" height="38" rx="4" fill="#0d1a24"/><path d="M190 79 h70"/>
+      <path d="M260 70 l14 -8 M260 88 l14 8" stroke="${C.r407}"/>
+      <text x="55" y="135" fill="#5c7081" font-size="11" font-family="Rajdhani" stroke="none">filter · coil · fan · duct</text>
+    </g></svg>`,
+    pkg:`<svg viewBox="0 0 300 158"><g ${base}>
+      <rect x="60" y="100" width="180" height="10" fill="#0d1a24"/>
+      <rect x="74" y="44" width="152" height="58" rx="6" fill="#11212e"/>
+      <circle cx="110" cy="73" r="17"/><path d="M110 73 L110 58 M110 73 L123 81 M110 73 L97 81" stroke="${C.r407}"/>
+      <circle cx="170" cy="73" r="17"/><path d="M170 73 L170 58 M170 73 L183 81 M170 73 L157 81" stroke="${C.r407}"/>
+      <rect x="196" y="56" width="22" height="34" rx="3" stroke="${C.r407}"/>
+      <text x="86" y="128" fill="#5c7081" font-size="11" font-family="Rajdhani" stroke="none">all-in-one rooftop unit</text>
+    </g></svg>`,
+    split:`<svg viewBox="0 0 300 158"><g ${base}>
+      <rect x="34" y="48" width="104" height="30" rx="8" fill="#11212e"/>
+      <path d="M44 66 h84" stroke="${C.r410}"/><path d="M50 84 l6 10 M70 84 l6 10 M90 84 l6 10 M110 84 l6 10" stroke="${C.r410}"/>
+      <rect x="186" y="58" width="78" height="62" rx="6" fill="#0d1a24"/>
+      <circle cx="225" cy="89" r="22"/><path d="M225 89 L225 70 M225 89 L242 99 M225 89 L208 99" stroke="${C.r410}"/>
+      <path d="M138 70 C160 70 164 88 186 88" stroke="${C.r410}" stroke-dasharray="5 4"/>
+      <text x="40" y="112" fill="#5c7081" font-size="11" font-family="Rajdhani" stroke="none">indoor</text>
+      <text x="198" y="136" fill="#5c7081" font-size="11" font-family="Rajdhani" stroke="none">outdoor condenser</text>
+    </g></svg>`,
+    cs3:`<svg viewBox="0 0 300 158"><g ${base}>
+      <rect x="58" y="34" width="150" height="92" rx="5" fill="#11212e"/>
+      <rect x="66" y="42" width="134" height="76" rx="3" stroke-dasharray="4 4"/>
+      <rect x="150" y="50" width="42" height="68" rx="2" fill="#0d1a24"/><circle cx="156" cy="84" r="2.5" fill="#5c7081" stroke="none"/>
+      <rect x="74" y="50" width="56" height="16" rx="2" stroke="${C.r507}"/><path d="M80 66 v6 M92 66 v6 M104 66 v6 M116 66 v6" stroke="${C.r507}"/>
+      <text x="70" y="100" fill="${C.r507}" font-size="20" font-family="Rajdhani" stroke="none" font-weight="700">3F</text>
+      <text x="66" y="140" fill="#5c7081" font-size="11" font-family="Rajdhani" stroke="none">insulated cold room</text>
+    </g></svg>`,
+    csg:`<svg viewBox="0 0 300 158"><g ${base}>
+      <rect x="58" y="34" width="150" height="92" rx="5" fill="#11212e"/>
+      <rect x="66" y="42" width="134" height="76" rx="3" stroke-dasharray="4 4"/>
+      <rect x="150" y="50" width="42" height="68" rx="2" fill="#0d1a24"/><circle cx="156" cy="84" r="2.5" fill="#5c7081" stroke="none"/>
+      <rect x="74" y="50" width="56" height="16" rx="2" stroke="${C.r404}"/><path d="M80 66 v6 M92 66 v6 M104 66 v6 M116 66 v6" stroke="${C.r404}"/>
+      <text x="70" y="100" fill="${C.r404}" font-size="18" font-family="Rajdhani" stroke="none" font-weight="700">GF</text>
+      <text x="66" y="140" fill="#5c7081" font-size="11" font-family="Rajdhani" stroke="none">ground-floor cold room</text>
+    </g></svg>`,
+    fcu:`<svg viewBox="0 0 300 158"><g ${base}>
+      <rect x="78" y="50" width="144" height="44" rx="8" fill="#11212e"/>
+      <path d="M90 72 h60" stroke="${C.r410}" stroke-width="3"/>
+      <circle cx="180" cy="72" r="15"/><path d="M180 72 L180 60 M180 72 L191 79 M180 72 L169 79" stroke="${C.r410}"/>
+      <path d="M96 94 l5 10 M114 94 l5 10 M132 94 l5 10" stroke="${C.r410}"/>
+      <text x="86" y="124" fill="#5c7081" font-size="11" font-family="Rajdhani" stroke="none">fan + coil · local cooling</text>
+    </g></svg>`,
+    crac:`<svg viewBox="0 0 300 158"><g ${base}>
+      <rect x="48" y="40" width="60" height="86" rx="4" fill="#11212e"/>
+      <path d="M56 54 h44 M56 68 h44 M56 82 h44 M56 96 h44" stroke="${C.r407}"/>
+      <rect x="150" y="40" width="40" height="86" rx="4" fill="#0d1a24"/>
+      <circle cx="170" cy="62" r="3" fill="${C.r407}" stroke="none"/><circle cx="170" cy="76" r="3" fill="#3a566b" stroke="none"/>
+      <path d="M198 60 h40 M198 78 h40 M198 96 h40" stroke="${C.r407}" stroke-dasharray="3 5"/>
+      <path d="M108 70 h42" stroke="${C.r407}"/>
+      <text x="52" y="144" fill="#5c7081" font-size="11" font-family="Rajdhani" stroke="none">server rack · precision AC</text>
+    </g></svg>`,
+    fau:`<svg viewBox="0 0 300 158"><g ${base}>
+      <path d="M30 60 q14 -10 28 0 M30 76 q14 -10 28 0" stroke="${C.free}"/>
+      <rect x="64" y="44" width="150" height="70" rx="6" fill="#11212e"/>
+      <line x1="96" y1="44" x2="96" y2="114"/>
+      <path d="M102 52 v54 M110 52 v54 M118 52 v54 M126 52 v54" stroke="${C.free}" stroke-width="3"/>
+      <text x="138" y="74" fill="${C.free}" font-size="13" font-family="Rajdhani" stroke="none" font-weight="700">GALCO</text>
+      <text x="138" y="92" fill="#5c7081" font-size="10" font-family="Rajdhani" stroke="none">cold flow · no Freon</text>
+      <path d="M214 70 l16 -8 M214 88 l16 8" stroke="${C.free}"/>
+      <text x="30" y="46" fill="#5c7081" font-size="11" font-family="Rajdhani" stroke="none">fresh air</text>
+    </g></svg>`
+  };
+  return M[id]||'';
+}
+
+const grid=document.getElementById('grid');
+grid.innerHTML=DEVICES.map(d=>{
+  const col=REF[d.ref].c;
+  const tag=d.ref==='Freon-free'?'Freon-free · Galco':d.ref;
+  return `<article class="card" data-id="${d.id}">
+    <div class="ill">${svg(d.id)}
+      <span class="rtag" style="background:${col}"><i></i>${tag}</span>
+    </div>
+    <div class="body">
+      <span class="role">${d.role}</span>
+      <h3>${d.name} <span class="ab">${d.full}</span></h3>
+      <p>${d.desc}</p>
+      <div class="purpose"><b>Purpose:</b> ${d.purpose}</div>
+    </div>
+  </article>`;
+}).join('');
+</script>
+</body>
+</html>

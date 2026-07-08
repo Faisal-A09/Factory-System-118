@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Interactive Compound Power, Security &amp; Monitoring System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="../vendor/three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>')</script>
+<script>window.THREE||document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>window.THREE||document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>window.addEventListener('DOMContentLoaded',function(){if(!window.THREE){var d=document.createElement('div');d.setAttribute('role','alert');d.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999;background:#2a1113;border:1px solid #ff5163;color:#ffd7db;font:12px monospace;padding:9px 16px;border-radius:10px;max-width:92vw;text-align:center';d.textContent='3D engine failed to load \u2014 check your internet connection. | \u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0645\u062d\u0631\u0643 \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u2014 \u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0627\u062a\u0635\u0627\u0644.';document.body.appendChild(d);}});</script>
+<style>
+  :root{
+    --bg:#0a0e14; --bg2:#0d131c; --panel:#111927; --panel2:#0e1622;
+    --line:#1d2a3a; --line2:#27374b; --grid:#13202e;
+    --txt:#cdd9e6; --txt2:#8294a8; --muted:#5d6f84;
+    --power:#e8edf3; --normal:#34d399; --emerg:#f59e0b; --fire:#ef4444;
+    --data:#3b82f6; --control:#a855f7; --cyan:#22d3ee; --warn:#fbbf24;
+    --mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:var(--sans)}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(34,211,238,.06), transparent 60%),radial-gradient(900px 500px at 0% 110%, rgba(168,85,247,.05), transparent 60%),var(--bg);min-height:100vh}
+  .mono{font-family:var(--mono)}
+  header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 20px;background:linear-gradient(180deg,rgba(13,19,28,.96),rgba(13,19,28,.82));border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+  .brand{display:flex;align-items:center;gap:14px;min-width:0}
+  .logo{width:42px;height:42px;border-radius:9px;flex:none;background:linear-gradient(135deg,#0e2436,#0a1a28);border:1px solid var(--line2);display:grid;place-items:center;position:relative;overflow:hidden}
+  .logo::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 5px,rgba(34,211,238,.10) 5px 6px)}
+  .logo svg{position:relative;z-index:1}
+  .brand h1{font-size:15px;line-height:1.15;margin:0;letter-spacing:.3px;font-weight:650}
+  .brand .sub{font-family:var(--mono);font-size:10.5px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase}
+  .spacer{flex:1 1 auto}
+  .sysclock{font-family:var(--mono);font-size:11px;color:var(--txt2);text-align:right;line-height:1.4}
+  .sysclock b{color:var(--normal);font-weight:600}
+  .topbtns{display:flex;gap:8px;flex-wrap:wrap}
+  button.btn{font-family:var(--mono);font-size:11px;letter-spacing:.5px;background:var(--panel);color:var(--txt);border:1px solid var(--line2);padding:9px 12px;border-radius:8px;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+  button.btn:hover{border-color:var(--cyan);color:#fff;background:#0f1e2b}
+  button.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  button.btn svg{width:14px;height:14px}
+  .wrap{display:grid;grid-template-columns:268px 1fr;gap:0;align-items:stretch}
+  aside{border-right:1px solid var(--line);background:var(--panel2);padding:16px 14px 40px;position:relative}
+  main{min-width:0;padding:16px 18px 60px}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:12px;padding:14px 14px 16px;margin-bottom:16px}
+  .panel h2{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--txt2);margin:0 0 12px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .panel h2::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+  .scn{display:flex;flex-direction:column;gap:8px}
+  .scn button{text-align:left;font-family:var(--sans);font-size:12.5px;color:var(--txt);background:var(--panel);border:1px solid var(--line2);border-radius:9px;padding:10px 11px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:10px}
+  .scn button .n{font-family:var(--mono);font-size:10px;color:var(--muted);flex:none}
+  .scn button:hover{border-color:var(--cyan);background:#0f1e2b}
+  .scn button.active{border-color:var(--cyan);background:#0e2230;box-shadow:0 0 0 1px var(--cyan) inset,0 0 16px rgba(34,211,238,.12)}
+  .scn button.active .n{color:var(--cyan)}
+  .scn button .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--muted)}
+  .scn button.active .dot{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+  .legend{display:flex;flex-direction:column;gap:9px}
+  .leg{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--txt2)}
+  .leg .sw{width:34px;height:0;border-top-width:3px;border-top-style:solid;flex:none;border-radius:2px}
+  .leg .sw.dash{border-top-style:dashed}
+  .diagram-card{padding:0;overflow:hidden;position:relative}
+  .diagram-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .diagram-head .title{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--txt2)}
+  .badge{font-family:var(--mono);font-size:10.5px;padding:4px 9px;border-radius:20px;border:1px solid var(--line2);color:var(--txt2)}
+  .badge.live{color:var(--cyan);border-color:rgba(34,211,238,.4)}
+  .badge.live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--cyan);margin-right:6px;box-shadow:0 0 7px var(--cyan);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .scrollx{overflow:auto;background:linear-gradient(var(--grid) 1px,transparent 1px) 0 0/100% 40px,linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/40px 100%,#0a121b}
+  svg#diagram{display:block;width:2240px;min-width:2240px;height:auto}
+  .lyr-band{fill:rgba(255,255,255,.012);stroke:var(--line);stroke-dasharray:2 6}
+  .lyr-label{font-family:var(--mono);font-size:11px;fill:var(--muted);letter-spacing:3px;text-transform:uppercase}
+  .edge{fill:none;stroke-linecap:round;stroke-linejoin:round;transition:opacity .3s, stroke .3s}
+  .edge.idle{opacity:.18}
+  .edge.flow{stroke-dasharray:9 8;animation:dash 1s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-34}}
+  .node{cursor:pointer}
+  .node .box{fill:var(--panel);stroke:var(--line2);stroke-width:1.4;rx:9;transition:.2s}
+  .node:hover .box{stroke:var(--cyan);filter:drop-shadow(0 0 6px rgba(34,211,238,.35))}
+  .node:focus-visible .box{stroke:var(--cyan);outline:none}
+  .node .lab{font-family:var(--mono);font-size:13px;fill:#eaf2f9;font-weight:600;pointer-events:none}
+  .node .sub{font-family:var(--mono);font-size:9.5px;fill:var(--txt2);letter-spacing:.5px;pointer-events:none}
+  .node .led{transition:.3s}
+  .node.energized .box{stroke:var(--cyan);fill:#0e2230}
+  .node.dim{opacity:.4}
+  .node.alarm .box{stroke:var(--fire);fill:#2a1113}
+  .nodeicon{pointer-events:none}
+  @media (prefers-reduced-motion: reduce){.edge.flow{animation:none;stroke-dasharray:none}.badge.live::before{animation:none}}
+  .dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .tile{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:11px;padding:13px 13px 12px;position:relative;overflow:hidden}
+  .tile::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--muted);transition:.3s}
+  .tile.ok::after{background:var(--normal);box-shadow:0 0 12px var(--normal)}
+  .tile.warn::after{background:var(--emerg);box-shadow:0 0 12px var(--emerg)}
+  .tile.crit::after{background:var(--fire);box-shadow:0 0 12px var(--fire)}
+  .tile.info::after{background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+  .tile .k{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt2)}
+  .tile .v{font-size:15px;font-weight:650;margin-top:5px;color:#fff}
+  .tile .m{font-family:var(--mono);font-size:10.5px;color:var(--txt2);margin-top:3px}
+  .tile .led{position:absolute;top:13px;right:13px;width:9px;height:9px;border-radius:50%;background:var(--muted)}
+  .tile.ok .led{background:var(--normal);box-shadow:0 0 9px var(--normal)}
+  .tile.warn .led{background:var(--emerg);box-shadow:0 0 9px var(--emerg);animation:pulse 1.2s infinite}
+  .tile.crit .led{background:var(--fire);box-shadow:0 0 9px var(--fire);animation:pulse .8s infinite}
+  .tile.info .led{background:var(--cyan);box-shadow:0 0 9px var(--cyan)}
+  .scn-banner{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:11px;margin-bottom:14px;border:1px solid var(--line2);background:var(--panel);font-size:13px}
+  .scn-banner .ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;background:#0e2230;border:1px solid var(--line2)}
+  .scn-banner b{color:#fff}
+  .scn-banner.normal{border-color:rgba(52,211,153,.4)}
+  .scn-banner.outage{border-color:rgba(245,158,11,.45)}
+  .scn-banner.fire{border-color:rgba(239,68,68,.5)}
+  .scn-banner.maint{border-color:rgba(34,211,238,.4)}
+  .scn-banner.ups{border-color:rgba(168,85,247,.45)}
+  table.gloss{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.gloss th,table.gloss td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line)}
+  table.gloss th{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt2)}
+  table.gloss td:first-child{font-family:var(--mono);color:var(--cyan);white-space:nowrap;font-weight:600}
+  table.gloss tr:hover td{background:rgba(34,211,238,.04)}
+  .overlay{position:fixed;inset:0;background:rgba(4,8,12,.72);backdrop-filter:blur(4px);z-index:80;display:none;align-items:center;justify-content:center;padding:20px}
+  .overlay.show{display:flex}
+  .modal{width:min(560px,96vw);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#0f1825,#0b131d);border:1px solid var(--line2);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+  .modal-head{display:flex;align-items:flex-start;gap:14px;padding:18px 18px 14px;border-bottom:1px solid var(--line)}
+  .modal-head .mi{width:46px;height:46px;border-radius:11px;flex:none;display:grid;place-items:center;background:#0e2230;border:1px solid var(--line2)}
+  .modal-head h3{margin:0;font-size:17px;color:#fff}
+  .modal-head .tag{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);margin-top:4px}
+  .modal-head .x{margin-left:auto;background:none;border:1px solid var(--line2);color:var(--txt2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px}
+  .modal-head .x:hover{border-color:var(--fire);color:var(--fire)}
+  .modal-body{padding:16px 18px 20px}
+  .mrow{margin-bottom:14px}
+  .mrow .k{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt2);margin-bottom:5px}
+  .mrow .val{font-size:13px;line-height:1.55;color:var(--txt)}
+  .io{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .io .cell{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 11px}
+  .io .cell .k{margin-bottom:4px}
+  .io .cell .val{font-family:var(--mono);font-size:11.5px;color:var(--txt)}
+  .statline{display:flex;gap:10px;flex-wrap:wrap}
+  .pill{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--line2);color:var(--txt2)}
+  .pill.ok{color:var(--normal);border-color:rgba(52,211,153,.4)}
+  .pill.em{color:var(--emerg);border-color:rgba(245,158,11,.4)}
+  .rel{display:flex;gap:6px;flex-wrap:wrap}
+  .rel span{font-family:var(--mono);font-size:10.5px;padding:4px 9px;border-radius:6px;background:#0e1a26;border:1px solid var(--line);color:var(--txt2)}
+  .admin-field{margin-bottom:12px}
+  .admin-field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt2);margin-bottom:6px}
+  .admin-field input,.admin-field textarea{width:100%;background:var(--panel);border:1px solid var(--line2);border-radius:8px;color:var(--txt);padding:9px 10px;font-family:var(--sans);font-size:13px;resize:vertical}
+  .admin-field textarea{min-height:74px}
+  .admin-save{margin-top:4px;background:#0e2230;border:1px solid var(--cyan);color:var(--cyan)}
+  footer{padding:20px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:10.5px;letter-spacing:.5px;border-top:1px solid var(--line)}
+  @media (max-width:960px){.wrap{grid-template-columns:1fr}aside{border-right:none;border-bottom:1px solid var(--line)}.dash-grid{grid-template-columns:repeat(2,1fr)}}
+  .viewswitch{display:inline-flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:4px;margin-bottom:14px;flex-wrap:wrap}
+  .viewswitch button{font-family:var(--mono);font-size:11.5px;letter-spacing:.5px;color:var(--txt2);background:transparent;border:none;padding:9px 14px;border-radius:8px;cursor:pointer;transition:.15s}
+  .viewswitch button:hover{color:#fff}
+  .viewswitch button.active{background:#0e2230;color:var(--cyan);box-shadow:0 0 0 1px rgba(34,211,238,.4) inset}
+  #three-wrap{position:relative;height:560px;background:radial-gradient(800px 400px at 50% 0%,rgba(34,211,238,.05),transparent 60%),#070d14;overflow:hidden}
+  #three-wrap canvas{display:block}
+  #three-hint{position:absolute;inset:0;display:grid;place-items:center;color:var(--txt2);font-size:12px;letter-spacing:1px;pointer-events:none}
+  .three-legend{position:absolute;left:14px;bottom:14px;display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--txt2);background:rgba(7,13,20,.72);padding:8px 12px;border:1px solid var(--line);border-radius:9px}
+  .three-legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  .three-tip{position:absolute;top:14px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--cyan);background:rgba(7,13,20,.72);padding:6px 11px;border:1px solid var(--line2);border-radius:8px}
+  .seq-body{display:grid;grid-template-columns:1.4fr 1fr;gap:0}
+  #seqSvg{display:block;width:100%;height:auto;background:#0a121b;border-right:1px solid var(--line)}
+  .seq-side{padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px}
+  .seq-step-num{font-size:10px;letter-spacing:2px;color:var(--cyan)}
+  .seq-step-title{font-size:17px;font-weight:650;color:#fff}
+  .seq-step-desc{font-size:13px;line-height:1.55;color:var(--txt2);min-height:62px}
+  .seq-ups{margin-top:4px}
+  .seq-ups-k{font-size:10px;letter-spacing:1.5px;color:var(--txt2);margin-bottom:6px}
+  .seq-bar{height:14px;border-radius:8px;background:#0e1a26;border:1px solid var(--line2);overflow:hidden}
+  .seq-bar-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--normal),#10b981);transition:width .6s ease,background .4s}
+  .seq-ups-state{font-size:11px;color:var(--txt2);margin-top:6px}
+  .seq-timeline{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+  .seq-timeline .t{flex:1;min-width:10px;height:6px;border-radius:3px;background:var(--line2);transition:.3s;cursor:pointer}
+  .seq-timeline .t.done{background:var(--cyan)}
+  .seq-timeline .t.cur{background:#fff;box-shadow:0 0 8px var(--cyan)}
+  .ups-gauge{display:flex;align-items:center;gap:14px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:14px}
+  .ug-ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:20px;background:#0e2230;border:1px solid var(--line2);flex:none}
+  .ug-main{flex:1;min-width:0}
+  .ug-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+  .ug-k{font-size:10px;letter-spacing:1.5px;color:var(--txt2)}
+  .ug-pct{font-size:15px;font-weight:650;color:#fff}
+  .ug-bar{height:12px;border-radius:7px;background:#0e1a26;border:1px solid var(--line2);overflow:hidden}
+  .ug-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--normal),#10b981);transition:width .7s ease,background .4s}
+  .ug-state{font-size:11px;color:var(--txt2);margin-top:7px}
+  @media (max-width:760px){.seq-body{grid-template-columns:1fr}#seqSvg{border-right:none;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+    <div><h1>Compound Power, Security &amp; Monitoring</h1><div class="sub">MV 13.8 kV · SLD &amp; System Architecture</div></div>
+  </div>
+  <div class="spacer"></div>
+  <div class="sysclock"><div>SYSTEM TIME <b id="clk">--:--:--</b></div><div>MODE <b id="modeLbl">NORMAL</b></div></div>
+  <div class="topbtns">
+    <button class="btn" id="btnPng"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>PNG</button>
+    <button class="btn" id="btnPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>PDF</button>
+  </div>
+</header>
+<div class="wrap">
+  <aside>
+    <div class="panel"><h2>Scenario Simulation</h2><div class="scn" id="scnBtns"></div></div>
+    <div class="panel"><h2>Arrow &amp; Color Legend</h2><div class="legend" id="legend"></div></div>
+    <div class="panel"><h2>Admin · ASR Label</h2>
+      <div class="admin-field"><label>ASR display name</label><input id="asrName" value="ASR" /></div>
+      <div class="admin-field"><label>ASR definition</label><textarea id="asrDef">Central security/server system that receives information from different systems, supports monitoring, and helps coordinate alarms, CCTV events, fire alarm events and control room actions.</textarea></div>
+      <button class="btn admin-save" id="asrSave">Save ASR label</button>
+    </div>
+  </aside>
+  <main>
+    <div class="scn-banner normal" id="scnBanner"><div class="ico" id="scnIco"></div><div><b id="scnTitle">Normal Power Operation</b><div class="mono" style="font-size:11px;color:var(--txt2);margin-top:2px" id="scnDesc">Utility supply healthy · loads on transformer power.</div></div></div>
+    <div class="viewswitch" id="viewSwitch">
+      <button data-v="2d" class="active">⬡ 2D Single-Line</button>
+      <button data-v="3d">⬢ 3D Simulation</button>
+      <button data-v="seq">⇄ Transfer Sequence</button>
+    </div>
+    <div class="panel diagram-card view" id="view2d">
+      <div class="diagram-head"><span class="title">Integrated Single-Line &amp; System Architecture</span><span class="badge live">LIVE</span><span class="badge mono">Click any component for details</span><div class="spacer" style="flex:1"></div><span class="badge mono" id="flowBadge">FLOW · NORMAL</span></div>
+      <div class="scrollx" id="captureZone"><svg id="diagram" viewBox="0 0 2240 1240" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Single line diagram"></svg></div>
+    </div>
+    <div class="panel diagram-card view" id="view3d" style="display:none">
+      <div class="diagram-head"><span class="title">3D Power Simulation</span><span class="badge mono">Drag to orbit · scroll to zoom · click a block</span><div class="spacer" style="flex:1"></div><button class="btn" id="btn3dRot" style="padding:6px 10px">⟳ Auto-rotate: ON</button><button class="btn" id="btn3dReset" style="padding:6px 10px">Reset view</button></div>
+      <div id="three-wrap"><div id="three-hint" class="mono">Loading 3D engine…</div><div class="three-tip" id="three-tip">FLOW · NORMAL</div><div class="three-legend"><span><i style="background:#e8edf3"></i>Utility / MV power</span><span><i style="background:#f59e0b"></i>Generator power</span><span><i style="background:#22d3ee"></i>400V / loads</span><span><i style="background:#ef4444"></i>Fire event</span></div></div>
+    </div>
+    <div class="panel view" id="viewSeq" style="display:none;padding:0;overflow:hidden">
+      <div class="diagram-head"><span class="title">ATS Transfer Sequence · How switching handles a line outage</span><div class="spacer" style="flex:1"></div><button class="btn" id="seqPlay" style="padding:6px 10px">▶ Play</button><button class="btn" id="seqStep" style="padding:6px 10px">Step ›</button><button class="btn" id="seqReset" style="padding:6px 10px">↺ Reset</button></div>
+      <div class="seq-body"><svg id="seqSvg" viewBox="0 0 900 360" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="seq-side"><div class="seq-step-num mono" id="seqNum">STEP 1 / 9</div><div class="seq-step-title" id="seqTitle">Normal supply</div><div class="seq-step-desc" id="seqDesc">—</div>
+          <div class="seq-ups"><div class="seq-ups-k mono">UPS BATTERY · BRIDGE</div><div class="seq-bar"><div class="seq-bar-fill" id="seqUps"></div></div><div class="seq-ups-state mono" id="seqUpsState">100% · CHARGING</div></div>
+          <div class="seq-timeline" id="seqTimeline"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel"><h2>Control Room Dashboard</h2>
+      <div class="ups-gauge" id="upsGauge"><div class="ug-ico">🔋</div><div class="ug-main"><div class="ug-top"><span class="ug-k mono">UPS BATTERY AUTONOMY</span><span class="ug-pct mono" id="ugPct">100%</span></div><div class="ug-bar"><div class="ug-fill" id="ugFill"></div></div><div class="ug-state mono" id="ugState">Charging · bridging the ATS transfer window</div></div></div>
+      <div class="dash-grid" id="dash"></div>
+    </div>
+    <div class="panel"><h2>Glossary</h2><table class="gloss"><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody id="glossBody"></tbody></table></div>
+  </main>
+</div>
+<footer>INTERACTIVE ENGINEERING PLATFORM · MV 13.8 kV → 400V 3-PH · 4 RMU / 8 XFMR / 8 ATS / 7×1400 kVA GEN · UPS · FIRE · NVR · ASR · CCTV</footer>
+<div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<script>
+const W=2240;
+const LAYERS=[
+  {y:30,h:230,label:"LAYER 1 · MEDIUM VOLTAGE (13.8 kV)"},
+  {y:270,h:430,label:"LAYER 2 · LOW VOLTAGE (400V 3-PH) · GENERATION"},
+  {y:710,h:300,label:"LAYER 3 · CRITICAL SYSTEMS"},
+  {y:1020,h:200,label:"LAYER 4 · MONITORING & RESPONSE"},
+];
+const CX=[ 345, 595, 845, 1095, 1345, 1595, 1845, 2095 ];
+const RMUC=[ 470, 970, 1470, 1970 ];
+const NW=150, NH=58;
+function n(id,label,sub,x,y,opt={}){return Object.assign({id,label,sub,x,y,w:opt.w||NW,h:opt.h||NH,icon:opt.icon||'box',cat:opt.cat||'power'},opt);}
+const NODES=[
+  n('dist','GRID DISTRIBUTOR','UTILITY · 13.8 kV', 70, 56,{w:170,h:72,icon:'grid',cat:'mv'}),
+  n('mvsu','MVSU','13.8 kV SUPPLY', 1135, 60,{w:170,h:64,icon:'mv',cat:'mv'}),
+  n('rmu1','RMU-1','RING MAIN', RMUC[0]-NW/2,180,{icon:'rmu'}),
+  n('rmu2','RMU-2','RING MAIN', RMUC[1]-NW/2,180,{icon:'rmu'}),
+  n('rmu3','RMU-3','RING MAIN', RMUC[2]-NW/2,180,{icon:'rmu'}),
+  n('rmu4','RMU-4','RING MAIN', RMUC[3]-NW/2,180,{icon:'rmu'}),
+  ...Array.from({length:8},(_,i)=>n('xf'+(i+1),'XFMR-'+(i+1),'13.8kV→400V', CX[i]-NW/2,320,{icon:'xfmr'})),
+  ...Array.from({length:8},(_,i)=>n('ats'+(i+1),'ATS-'+(i+1),'TRANSFER SW', CX[i]-NW/2,500,{icon:'ats'})),
+  n('genbus','GENERATOR BUSBAR','EMERGENCY', 70,440,{w:140,h:50,icon:'bus',cat:'emerg'}),
+  ...Array.from({length:7},(_,i)=>n('gen'+(i+1),'GEN-'+(i+1),'1400 kVA', 70, 530+i*64, {w:140,h:50,icon:'gen',cat:'emerg'})),
+  n('lv400','400V 3-PHASE LV DISTRIBUTION','MAIN LV BUS', 270,640,{w:1900,h:46,icon:'lvbus',cat:'power'}),
+  n('ups','UPS','BATTERY BACKUP', 1045,760,{icon:'ups',cat:'power'}),
+  n('firepanel','FIRE ALARM PANEL','FACP', 300,890,{icon:'fire',cat:'fire'}),
+  n('cctv','CCTV CAMERAS','IP CAMERAS', 620,890,{icon:'cam',cat:'data'}),
+  n('switch','NETWORK SWITCH','PoE / CORE', 940,890,{icon:'switch',cat:'data'}),
+  n('nvr','NVR','VIDEO RECORDER', 1260,890,{icon:'nvr',cat:'data'}),
+  n('asr','ASR','SECURITY SERVER', 1580,890,{icon:'asr',cat:'control'}),
+  n('smoke','SMOKE DETECTOR','', 200,1040,{w:130,h:44,icon:'dot',cat:'fire'}),
+  n('heat','HEAT DETECTOR','', 345,1040,{w:130,h:44,icon:'dot',cat:'fire'}),
+  n('mcp','MANUAL CALL POINT','', 490,1040,{w:150,h:44,icon:'dot',cat:'fire'}),
+  n('control','CONTROL ROOM','MONITORING HUB', 990,1090,{w:260,h:74,icon:'control',cat:'control'}),
+];
+const NMAP=Object.fromEntries(NODES.map(o=>[o.id,o]));
+function e(from,to,cat,scn,opt={}){return Object.assign({from,to,cat,scn},opt);}
+const ALL=['normal','outage','fire','maint','ups'];
+const EDGES=[
+  e('dist','mvsu','mv',['normal','fire','maint','ups'],{a:'r',b:'l'}),
+  e('mvsu','rmu1','mv',ALL),e('mvsu','rmu2','mv',ALL),e('mvsu','rmu3','mv',ALL),e('mvsu','rmu4','mv',ALL),
+  e('rmu1','xf1','mv',['normal','fire','maint','ups']),e('rmu1','xf2','mv',['normal','fire','maint','ups']),
+  e('rmu2','xf3','mv',['normal','fire','maint','ups']),e('rmu2','xf4','mv',['normal','fire','maint','ups']),
+  e('rmu3','xf5','mv',['normal','fire','maint','ups']),e('rmu3','xf6','mv',['normal','fire','maint','ups']),
+  e('rmu4','xf7','mv',['normal','fire','maint','ups']),e('rmu4','xf8','mv',['normal','fire','maint','ups']),
+  ...Array.from({length:8},(_,i)=>e('xf'+(i+1),'ats'+(i+1),'power',['normal','fire','maint','ups'],{a:'b',b:'t',off:-26})),
+  ...Array.from({length:7},(_,i)=>e('gen'+(i+1),'genbus','emerg',['outage'])),
+  ...Array.from({length:8},(_,i)=>e('genbus','ats'+(i+1),'emerg',['outage'],{route:'gen',off:26,midY:412+i*7})),
+  ...Array.from({length:8},(_,i)=>e('ats'+(i+1),'lv400','power',ALL,{a:'b',b:'t',bx:CX[i]})),
+  e('lv400','ups','power',ALL,{a:'b',b:'t',fx:1120}),
+  e('ups','firepanel','power',ALL,{dash:true}),e('ups','switch','power',ALL,{dash:true}),
+  e('ups','nvr','power',ALL,{dash:true}),e('ups','asr','power',ALL,{dash:true}),
+  e('cctv','switch','data',ALL,{a:'r',b:'l'}),e('switch','nvr','data',ALL,{a:'r',b:'l'}),
+  e('nvr','asr','data',ALL,{a:'r',b:'l'}),e('nvr','control','data',ALL,{a:'b',b:'t'}),
+  e('smoke','firepanel','fire',['fire'],{a:'t',b:'b'}),e('heat','firepanel','fire',['fire'],{a:'t',b:'b'}),
+  e('mcp','firepanel','fire',['fire'],{a:'t',b:'b'}),
+  e('firepanel','asr','fire',['fire'],{d:'M 375 948 V 1004 H 1655 V 948'}),
+  e('asr','control','control',ALL,{a:'b',b:'t'}),
+];
+const LEGEND=[
+  {c:'var(--power)',t:'Main electrical power flow'},
+  {c:'var(--emerg)',t:'Generator emergency power'},
+  {c:'var(--normal)',t:'Normal operation status'},
+  {c:'var(--fire)',t:'Fire alarm signal'},
+  {c:'var(--data)',t:'Network / data flow'},
+  {c:'var(--control)',t:'ASR integration / control'},
+  {c:'var(--txt2)',t:'Backup / emergency (dashed)',dash:true},
+];
+const CAT={mv:{c:'var(--power)',w:3.4},power:{c:'var(--power)',w:2.6},emerg:{c:'var(--emerg)',w:2.6},fire:{c:'var(--fire)',w:2.4},data:{c:'var(--data)',w:2.2},control:{c:'var(--control)',w:2.4}};
+function comp(o){return o;}
+const ICON_BIG={mv:'⚡',grid:'🗼',rmu:'⛬',xfmr:'⭍',ats:'⇄',gen:'⚙',bus:'▬',lvbus:'▭',ups:'🔋',fire:'🔥',switch:'🖧',nvr:'🎞',asr:'🛡',cam:'📷',dot:'◉',control:'🖥',box:'▣'};
+const COMPONENTS={
+  dist:comp({name:'Grid Distributor',tag:'Utility Supply · 13.8 kV',def:'The electricity distributor (utility network operator) that delivers medium-voltage power to the compound. It is the primary external power source feeding the MVSU at 13.8 kV through the utility incomer.',fn:['Primary external power source','Delivers 13.8 kV medium-voltage supply','Feeds the MVSU incomer','Defines "normal" power for the ATS logic'],in:'Utility distribution network',out:'MVSU 13.8 kV incomer',normal:'Healthy · supplying the compound',fail:'On distributor outage the MVSU de-energizes; every ATS detects loss of normal power and transfers loads to the generators.',rel:['MVSU','RMU','ATS','Generators']}),
+  mvsu:comp({name:'MVSU 13.8 kV',tag:'Medium Voltage Supply Unit',def:'Medium Voltage Supply Unit. Receives and distributes medium-voltage electrical power at 13.8 kV to the compound network.',fn:['Receives 13.8 kV medium-voltage power','Feeds the RMU units','Acts as the main MV supply point','Supports safe distribution to transformers'],in:'13.8 kV utility incomer',out:'4 × RMU feeders',normal:'Energized · feeding all branches',fail:'Loss here de-energizes all transformer feeders; ATS units transfer to generator supply.',rel:['RMU-1..4','Transformers','ATS']}),
+  rmu:comp({name:'RMU',tag:'Ring Main Unit',def:'Ring Main Unit — medium-voltage switchgear used to control, isolate and protect the medium-voltage feeders.',fn:['Controls medium-voltage power flow','Protects transformer feeders','Allows isolation during maintenance','Improves MV network reliability'],in:'MVSU 13.8 kV',out:'Transformer feeder',normal:'Closed · feeder protected',fail:'Trips/isolates its branch on fault; other branches keep running.',rel:['MVSU','Transformer']}),
+  xfmr:comp({name:'Transformer',tag:'13.8 kV → 400V 3-Phase',def:'Steps down voltage from 13.8 kV medium voltage to 400V 3-phase low voltage for compound loads.',fn:['Converts 13.8 kV to 400V','Supplies low-voltage distribution panels','Provides usable power for building loads & equipment'],in:'RMU (13.8 kV)',out:'400V 3-phase to ATS',normal:'Loaded · stepping down to 400V',fail:'If lost, its ATS sees loss of normal source and transfers to generator.',rel:['RMU','ATS','400V Distribution']}),
+  ats:comp({name:'ATS',tag:'Automatic Transfer Switch',def:'Automatic Transfer Switch — automatically transfers the load between the normal transformer supply and the emergency generator supply.',fn:['Monitors normal utility power','Detects power failure','Starts generator backup sequence','Transfers load to generator power','Transfers back after restoration'],in:'Transformer supply + Generator busbar',out:'400V 3-phase to LV distribution',normal:'On NORMAL source (transformer)',fail:'On utility loss, transfers load to generator busbar within seconds; transfers back after stable restoration.',rel:['Transformer','Generator busbar','400V Distribution']}),
+  gen:comp({name:'Standby Generator',tag:'1400 kVA',def:'Standby generator providing emergency electrical power when the normal utility supply fails. 7 units total, each rated 1400 kVA, tied to a common generator busbar.',fn:['Auto-starts on utility failure','Feeds the generator busbar','Supplies emergency power to ATS units','Runs during emergency or scheduled testing'],in:'Fuel / start signal',out:'Generator busbar',normal:'Standby · off',fail:'Starts automatically and energizes the busbar to carry critical loads.',rel:['Generator busbar','ATS','Critical loads']}),
+  genbus:comp({name:'Generator Busbar',tag:'Emergency Bus',def:'Common busbar that collects output from the 7 standby generators and delivers emergency power to the ATS units.',fn:['Paralleling/collection point for generators','Distributes emergency power to all 4 ATS','Single emergency source reference'],in:'7 × 1400 kVA generators',out:'ATS-1 / ATS-2 / ATS-3 / ATS-4',normal:'De-energized (standby)',fail:'Energized during outage to supply all ATS emergency inputs.',rel:['Generators','ATS']}),
+  lv400:comp({name:'400V 3-Phase Distribution',tag:'Low Voltage Main Bus',def:'400V 3-phase low-voltage supply used to feed the compound electrical loads.',fn:['Supplies building & HVAC loads','Supplies lighting','Supplies security systems','Supplies IT & control systems','Supplies UPS input'],in:'ATS outputs',out:'UPS + compound loads',normal:'Energized · feeding loads',fail:'Follows ATS source — backed by generators during outage.',rel:['ATS','UPS','Loads']}),
+  ups:comp({name:'UPS',tag:'Uninterruptible Power Supply',def:'Provides short-term instant backup power to critical electronic and security systems, bridging the transition between utility failure and generator availability.',fn:['Charges batteries from 400V supply','Supplies instant backup on interruption','Protects sensitive electronics','Returns to charging after transfer'],in:'400V 3-phase distribution',out:'NVR · ASR · Switches · CCTV · Fire panel · Control room',normal:'Online · batteries charging',fail:'Instantly carries critical loads during the ATS transfer window; does NOT replace generators.',rel:['400V Distribution','NVR','ASR','Fire panel','Control room']}),
+  firepanel:comp({name:'Fire Alarm Control Panel',tag:'FACP',def:'Receives signals from detectors and call points, identifies the alarm zone, activates sirens/strobes and notifies the control room.',fn:['Receives detector / call-point signals','Identifies alarm zone','Activates sirens & strobes','Sends alarm to ASR / control room'],in:'Smoke / Heat / Manual call point · UPS backup',out:'ASR / Control room alarm + sirens',normal:'Monitoring · no alarm',fail:'On detection, latches the zone, drives notification appliances and triggers CCTV view of the zone.',rel:['Detectors','ASR','Control room','UPS','CCTV']}),
+  smoke:comp({name:'Smoke Detector',tag:'Initiating Device',def:'Detects smoke and initiates a fire alarm signal to the control panel.',fn:['Senses smoke particles','Sends alarm to fire panel'],in:'Field environment',out:'Fire alarm panel',normal:'Standby · clear',fail:'On smoke, signals the panel which identifies the zone.',rel:['Fire panel']}),
+  heat:comp({name:'Heat Detector',tag:'Initiating Device',def:'Detects abnormal temperature rise and initiates a fire alarm signal.',fn:['Senses heat / rate-of-rise','Sends alarm to fire panel'],in:'Field environment',out:'Fire alarm panel',normal:'Standby · clear',fail:'On heat threshold, signals the panel.',rel:['Fire panel']}),
+  mcp:comp({name:'Manual Call Point',tag:'Initiating Device',def:'Manually operated device allowing a person to raise the fire alarm.',fn:['Manual alarm activation','Sends alarm to fire panel'],in:'Operator action',out:'Fire alarm panel',normal:'Standby',fail:'When activated, immediately signals the panel.',rel:['Fire panel']}),
+  switch:comp({name:'Network Switch',tag:'PoE / Core',def:'Connects cameras, NVR, ASR and the control room over the network; PoE switches also power IP cameras.',fn:['Connects CCTV / NVR / ASR / control room','Provides PoE to cameras','Routes data traffic'],in:'CCTV cameras · UPS',out:'NVR · ASR · Control room',normal:'Online · link up',fail:'UPS-backed to keep the security network alive during transfers.',rel:['CCTV','NVR','ASR','UPS']}),
+  nvr:comp({name:'NVR',tag:'Network Video Recorder',def:'Records and manages video footage from IP cameras through the network.',fn:['Live camera monitoring','Video recording','Playback','Storage management','Camera connection management'],in:'IP cameras via PoE switch · UPS',out:'Control room monitors · ASR',normal:'Recording · all cameras online',fail:'During a fire event, related camera view is pushed to the operator; UPS keeps it online.',rel:['CCTV','Switch','ASR','Control room','UPS']}),
+  asr:comp({name:'ASR',tag:'Security / Server System',def:'Central security/server system that receives information from different systems, supports monitoring, and helps coordinate alarms, CCTV events, fire alarm events and control room actions.',fn:['Integrates fire, CCTV and network events','Links alarms with cameras','Displays alarms to operators','Supports operator decision-making'],in:'Fire panel · NVR · Network switches · UPS',out:'Control room dashboard',normal:'Online · systems integrated',fail:'Correlates the fire zone with the nearest camera and surfaces it in the control room.',rel:['Fire panel','NVR','Switch','Control room']}),
+  cctv:comp({name:'CCTV Cameras',tag:'IP Cameras',def:'IP camera surveillance system feeding the network video recorder.',fn:['Capture live video','Stream to NVR via PoE switch','Provide visual verification'],in:'PoE switch (power + data)',out:'NVR',normal:'Streaming · recording',fail:'Camera near an alarm zone is auto-displayed to the operator.',rel:['Switch','NVR']}),
+  control:comp({name:'Control Room',tag:'Monitoring Hub',def:'Central monitoring room where operators observe alarms, cameras and power status, and coordinate emergency response.',fn:['Shows power / generator / ATS / UPS status','Displays fire alarm status','NVR live view','ASR dashboard','CCTV camera map'],in:'ASR · NVR · Fire panel',out:'Operator response & coordination',normal:'Online · all systems nominal',fail:'Receives alarms and warnings; operator verifies via CCTV and initiates emergency response.',rel:['ASR','NVR','Fire panel','UPS']}),
+};
+function compFor(id){
+  if(COMPONENTS[id]) return COMPONENTS[id];
+  if(id.startsWith('rmu')) return {...COMPONENTS.rmu,name:id.toUpperCase().replace('RMU','RMU-')};
+  if(id.startsWith('xf'))  return {...COMPONENTS.xfmr,name:'Transformer-'+id.slice(2)};
+  if(id.startsWith('ats')) return {...COMPONENTS.ats,name:id.toUpperCase().replace('ATS','ATS-')};
+  if(id.startsWith('gen')) return {...COMPONENTS.gen,name:'Generator-'+id.slice(3)};
+  return {name:id,tag:'',def:'',fn:[],in:'',out:'',normal:'',fail:'',rel:[]};
+}
+const SCEN={
+  normal:{title:'Normal Power Operation',cls:'normal',ico:'⚡',desc:'Distributor healthy → MVSU → transformers → loads · generators in standby.',flow:'NORMAL',nodes:{ats:'norm',gen:'off'},ups:[100,'Charging · bridging the ATS transfer window','ok'],dash:[['Distributor','13.8 kV ONLINE','Utility supplying','ok'],['Generators','STANDBY','7 × 1400 kVA ready','ok'],['ATS','NORMAL SOURCE','On transformer supply','ok'],['UPS','CHARGING','Batteries 100%','ok'],['Fire Alarm','MONITORING','No active alarms','ok'],['NVR','RECORDING','All cameras online','ok'],['ASR','INTEGRATED','Systems nominal','ok'],['Control Room','ONLINE','All systems nominal','ok']]},
+  outage:{title:'Utility Power Failure',cls:'outage',ico:'⚙',desc:'Distributor lost → ATS transferred all loads to generators · UPS bridged the gap.',flow:'EMERGENCY',nodes:{ats:'emerg',gen:'on',mvsuDim:true,distDim:true},ups:[78,'On battery during transfer → recharging on generator','info'],dash:[['Distributor','FAILED','Utility loss detected','crit'],['Generators','RUNNING','Busbar energized','warn'],['ATS','GENERATOR SOURCE','Transferred to emergency','warn'],['UPS','BACKED TRANSFER','Bridged transfer gap','info'],['Fire Alarm','MONITORING','Powered · no alarm','ok'],['NVR','RECORDING','UPS/Gen backed','ok'],['ASR','INTEGRATED','Online','ok'],['Control Room','WARNING','Outage acknowledged','warn']]},
+  fire:{title:'Fire Alarm Event',cls:'fire',ico:'🔥',desc:'Detector activated · zone alarmed · related CCTV pushed to operator.',flow:'FIRE',nodes:{ats:'norm',gen:'off',alarm:['firepanel','smoke','heat','mcp']},ups:[100,'Online · fire panel & monitoring backed','ok'],dash:[['Distributor','13.8 kV ONLINE','Utility supplying','ok'],['Generators','STANDBY','Ready','ok'],['ATS','NORMAL SOURCE','On transformer','ok'],['UPS','ONLINE','Fire panel backed','ok'],['Fire Alarm','ALARM · ZONE','Detector activated','crit'],['NVR','EVENT VIEW','Zone camera pushed','warn'],['ASR','ALARM ROUTED','Linked to camera','warn'],['Control Room','EMERGENCY','Response initiated','crit']]},
+  maint:{title:'Generator Maintenance Mode',cls:'maint',ico:'🛠',desc:'One generator isolated · remaining units available · ATS stays ready.',flow:'MAINT',nodes:{ats:'norm',gen:'off',iso:'gen1'},ups:[100,'Charging · full autonomy available','ok'],dash:[['Distributor','13.8 kV ONLINE','On transformer','ok'],['Generators','6 OF 7 READY','GEN-1 isolated','warn'],['ATS','READY','Normal source','ok'],['UPS','CHARGING','Batteries 100%','ok'],['Fire Alarm','MONITORING','No alarms','ok'],['NVR','RECORDING','Online','ok'],['ASR','INTEGRATED','Online','ok'],['Control Room','MAINTENANCE','GEN-1 service','info']]},
+  ups:{title:'UPS Backup Event',cls:'ups',ico:'🔋',desc:'Short power disturbance · UPS supplies instant backup to sensitive systems.',flow:'UPS',nodes:{ats:'norm',gen:'off',pulse:['ups','nvr','asr','switch','firepanel']},ups:[64,'On battery · instant backup during the disturbance','info'],dash:[['Distributor','DISTURBANCE','Brief interruption','warn'],['Generators','STARTING','Coming available','warn'],['ATS','TRANSFER WINDOW','Switching source','warn'],['UPS','ON BATTERY','Instant backup active','info'],['Fire Alarm','ONLINE','UPS backed','ok'],['NVR','ONLINE','No interruption','ok'],['ASR','ONLINE','No interruption','ok'],['Control Room','STABLE','Sensitive loads held','info']]},
+  sag:{title:'Voltage Sag / Brownout',cls:'ups',ico:'📉',desc:'Distributor voltage dips briefly · UPS rides through · generators do NOT start.',flow:'SAG',nodes:{ats:'norm',gen:'off',pulse:['ups']},ups:[90,'Brief ride-through · sag absorbed, no transfer needed','info'],dash:[['Distributor','VOLTAGE SAG','Dip within limits','warn'],['Generators','STANDBY','No start required','ok'],['ATS','HOLDING NORMAL','Sag within ride-through','ok'],['UPS','RIDE-THROUGH','Absorbing the dip','info'],['Fire Alarm','ONLINE','Unaffected','ok'],['NVR','RECORDING','Unaffected','ok'],['ASR','INTEGRATED','Unaffected','ok'],['Control Room','STABLE','Power-quality event logged','info']]},
+  feeder:{title:'Single Feeder Fault',cls:'maint',ico:'⚠',desc:'One MV feeder faults & isolates · its ATS transfers that branch to generator · other branches stay on utility.',flow:'FEEDER',nodes:{ats:'norm',gen:'on',dimList:['rmu1','xf1'],atsEmergList:['ats1']},ups:[88,'One branch bridged during its local transfer','info'],dash:[['Distributor','PARTIAL','Branch-1 feeder isolated','warn'],['Generators','SUPPORTING','Carrying branch-1','warn'],['ATS','BRANCH ON GEN','ATS-1 transferred','warn'],['UPS','BRIDGED','Branch-1 transfer covered','info'],['Fire Alarm','ONLINE','Unaffected','ok'],['NVR','RECORDING','Unaffected','ok'],['ASR','INTEGRATED','Fault localized','ok'],['Control Room','PARTIAL','Branch-1 fault isolated','warn']]},
+  longout:{title:'Extended Outage',cls:'outage',ico:'🛢',desc:'Sustained distributor loss · all branches on generators · UPS recharged on generator power.',flow:'SUSTAINED',nodes:{ats:'emerg',gen:'on',mvsuDim:true,distDim:true},ups:[100,'Recharged on generator · sustained autonomy','ok'],dash:[['Distributor','FAILED','Extended outage','crit'],['Generators','SUSTAINED RUN','Fuel monitored','warn'],['ATS','GENERATOR SOURCE','All branches on gen','warn'],['UPS','RECHARGED','100% on generator','ok'],['Fire Alarm','ONLINE','Gen backed','ok'],['NVR','RECORDING','Gen backed','ok'],['ASR','INTEGRATED','Online','ok'],['Control Room','OUTAGE · STABLE','Running on generators','warn']]},
+};
+const BASE={sag:'normal',feeder:'normal',longout:'outage'};
+const SCEN_ORDER=[['normal','Normal Operation'],['sag','Voltage Sag / Brownout'],['ups','UPS Backup Event'],['outage','Utility Power Failure'],['longout','Extended Outage'],['feeder','Single Feeder Fault'],['maint','Generator Maintenance'],['fire','Fire Alarm Event']];
+const SVG='http://www.w3.org/2000/svg';
+const svg=document.getElementById('diagram');
+function el(t,a={}){const e=document.createElementNS(SVG,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function anchor(node,which){const cx=node.x+node.w/2, cy=node.y+node.h/2;if(which==='t')return[cx,node.y];if(which==='b')return[cx,node.y+node.h];if(which==='l')return[node.x,cy];if(which==='r')return[node.x+node.w,cy];return[cx,cy];}
+let asrName='ASR';
+function build(){
+  svg.innerHTML='';
+  const defs=el('defs');
+  for(const k in CAT){const m=el('marker',{id:'arr-'+k,viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto-start-reverse'});m.appendChild(el('path',{d:'M0,0 L10,5 L0,10 z',fill:CAT[k].c}));defs.appendChild(m);}
+  svg.appendChild(defs);
+  LAYERS.forEach(L=>{svg.appendChild(el('rect',{x:20,y:L.y,width:W-40,height:L.h,rx:14,class:'lyr-band'}));const t=el('text',{x:34,y:L.y+18,class:'lyr-label'});t.textContent=L.label;svg.appendChild(t);});
+  const eg=el('g',{id:'edges'});svg.appendChild(eg);
+  EDGES.forEach((ed,i)=>{const a=NMAP[ed.from], b=NMAP[ed.to];if(!a||!b)return;const p=el('path',{class:'edge',id:'e'+i,'data-scn':ed.scn.join(' ')});p.setAttribute('d',pathFor(ed,a,b));const cc=CAT[ed.cat];p.setAttribute('stroke',cc.c);p.setAttribute('stroke-width',cc.w);if(ed.dash)p.setAttribute('stroke-dasharray','7 6');p.setAttribute('marker-end','url(#arr-'+ed.cat+')');p.dataset.cat=ed.cat;eg.appendChild(p);});
+  const ng=el('g',{id:'nodes'});svg.appendChild(ng);
+  NODES.forEach(o=>{
+    const g=el('g',{class:'node',id:'n-'+o.id,tabindex:'0',role:'button','aria-label':o.label});
+    g.appendChild(el('rect',{class:'box',x:o.x,y:o.y,width:o.w,height:o.h,rx:9}));
+    g.appendChild(el('circle',{class:'led',cx:o.x+o.w-13,cy:o.y+13,r:4,fill:'var(--normal)'}));
+    const ic=el('text',{x:o.x+15,y:o.y+o.h/2+6,'font-size':o.h>56?18:15,'class':'nodeicon'});ic.textContent=ICON_BIG[o.icon]||'▣';ic.setAttribute('fill',catColor(o.cat));g.appendChild(ic);
+    const lab=el('text',{class:'lab',x:o.x+38,y:o.sub?o.y+o.h/2-1:o.y+o.h/2+5});lab.textContent=o.label;g.appendChild(lab);
+    if(o.sub){const s=el('text',{class:'sub',x:o.x+38,y:o.y+o.h/2+13});s.textContent=o.sub;g.appendChild(s);}
+    g.addEventListener('click',()=>openModal(o.id));
+    g.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();openModal(o.id);}});
+    ng.appendChild(g);
+  });
+}
+function catColor(c){return ({mv:'var(--cyan)',power:'var(--power)',emerg:'var(--emerg)',fire:'var(--fire)',data:'var(--data)',control:'var(--control)'})[c]||'var(--txt)';}
+function pathFor(ed,a,b){
+  if(ed.d)return ed.d;
+  const A=anchor(a,ed.a||'b'), B=anchor(b,ed.b||'t');
+  let [ax,ay]=A,[bx,by]=B;
+  if(ed.route==='gen'){const gx=a.x+a.w, gy=a.y+a.h/2;const tx=b.x+b.w/2+(ed.off||0), ty=b.y;const my=ed.midY||465;return `M ${gx} ${gy} V ${my} H ${tx} V ${ty}`;}
+  if(ed.from.startsWith('gen')&&ed.to==='genbus'){const gx=a.x+a.w/2, gy=a.y; const bxx=b.x+b.w/2, byy=b.y+b.h;return `M ${gx} ${gy} V ${byy+8} H ${bxx} V ${byy}`;}
+  if(ed.off){bx+=ed.off;}
+  if(ed.bx!==undefined){bx=ed.bx;}
+  if(ed.fx!==undefined){ax=ed.fx; bx=ed.fx;}
+  if((ed.a==='r'||ed.a==='l')&&(ed.b==='l'||ed.b==='r')&&Math.abs(ay-by)<2){return `M ${ax} ${ay} H ${bx}`;}
+  const midY=(ay+by)/2;
+  if(Math.abs(ax-bx)<2){return `M ${ax} ${ay} V ${by}`;}
+  return `M ${ax} ${ay} V ${midY} H ${bx} V ${by}`;
+}
+let current='normal';
+function applyScenario(key){
+  current=key;const S=SCEN[key];const fk=BASE[key]||key;
+  EDGES.forEach((ed,i)=>{const p=document.getElementById('e'+i);if(!p)return;const on=ed.scn.includes(fk);p.classList.toggle('flow',on);p.classList.toggle('idle',!on);let col=CAT[ed.cat].c;if(on && ed.cat==='power' && fk==='normal') col='var(--normal)';if(on && ed.cat==='emerg') col='var(--emerg)';if(on && ed.cat==='fire') col='var(--fire)';p.setAttribute('stroke', on?col:CAT[ed.cat].c);p.setAttribute('marker-end', on?('url(#arr-'+ed.cat+')'):'none');});
+  NODES.forEach(o=>{const g=document.getElementById('n-'+o.id);g.classList.remove('energized','dim','alarm');g.querySelector('.led').setAttribute('fill','var(--normal)');});
+  const N=S.nodes||{};
+  NODES.filter(o=>o.id.startsWith('gen')&&o.id!=='genbus').forEach(o=>{const g=document.getElementById('n-'+o.id);if(N.gen==='on'){g.classList.add('energized');g.querySelector('.led').setAttribute('fill','var(--emerg)');}else {g.querySelector('.led').setAttribute('fill','var(--muted)');}});
+  {const gb=document.getElementById('n-genbus');if(N.gen==='on'){gb.classList.add('energized');gb.querySelector('.led').setAttribute('fill','var(--emerg)');}else gb.querySelector('.led').setAttribute('fill','var(--muted)');}
+  NODES.filter(o=>o.id.startsWith('ats')).forEach(o=>{const g=document.getElementById('n-'+o.id);g.querySelector('.led').setAttribute('fill', N.ats==='emerg'?'var(--emerg)':'var(--normal)');if(N.ats==='emerg')g.classList.add('energized');});
+  if(N.mvsuDim){const m=document.getElementById('n-mvsu');m.classList.add('dim');m.querySelector('.led').setAttribute('fill','var(--fire)');}
+  if(N.distDim){const d=document.getElementById('n-dist');if(d){d.classList.add('dim');d.querySelector('.led').setAttribute('fill','var(--fire)');}}
+  if(N.dimList){N.dimList.forEach(id=>{const g=document.getElementById('n-'+id);if(g){g.classList.add('dim');g.querySelector('.led').setAttribute('fill','var(--warn)');}});}
+  if(N.atsEmergList){N.atsEmergList.forEach(id=>{const g=document.getElementById('n-'+id);if(g){g.classList.add('energized');g.querySelector('.led').setAttribute('fill','var(--emerg)');}});}
+  if(N.alarm){N.alarm.forEach(id=>{const g=document.getElementById('n-'+id);if(g){g.classList.add('alarm');g.querySelector('.led').setAttribute('fill','var(--fire)');}});}
+  if(N.iso){const g=document.getElementById('n-'+N.iso);if(g){g.classList.add('dim');g.querySelector('.led').setAttribute('fill','var(--warn)');}}
+  if(N.pulse){N.pulse.forEach(id=>{const g=document.getElementById('n-'+id);if(g){g.classList.add('energized');g.querySelector('.led').setAttribute('fill','var(--cyan)');}});}
+  const bn=document.getElementById('scnBanner');bn.className='scn-banner '+S.cls;
+  document.getElementById('scnTitle').textContent=S.title;document.getElementById('scnDesc').textContent=S.desc;document.getElementById('scnIco').textContent=S.ico;document.getElementById('flowBadge').textContent='FLOW · '+S.flow;document.getElementById('modeLbl').textContent=S.flow;
+  document.querySelectorAll('#scnBtns button').forEach(b=>b.classList.toggle('active',b.dataset.k===key));
+  renderDash(S.dash);updateUpsGauge(S.ups||[100,'—','ok']);
+  if(window.sync3D) sync3D(key,fk);
+}
+function updateUpsGauge(u){const fill=document.getElementById('ugFill');const pct=document.getElementById('ugPct');const st=document.getElementById('ugState');if(!fill)return;fill.style.width=u[0]+'%';pct.textContent=u[0]+'%';st.textContent=u[1];const grad=u[2]==='info'?'linear-gradient(90deg,#a855f7,#22d3ee)':u[2]==='warn'?'linear-gradient(90deg,#f59e0b,#fbbf24)':u[2]==='crit'?'linear-gradient(90deg,#ef4444,#f87171)':'linear-gradient(90deg,var(--normal),#10b981)';fill.style.background=grad;}
+function renderScnBtns(){const c=document.getElementById('scnBtns');c.innerHTML='';SCEN_ORDER.forEach((s,i)=>{const b=document.createElement('button');b.dataset.k=s[0];b.innerHTML=`<span class="dot"></span><span class="n">0${i+1}</span><span>${s[1]}</span>`;b.onclick=()=>applyScenario(s[0]);c.appendChild(b);});}
+function renderLegend(){const c=document.getElementById('legend');c.innerHTML='';LEGEND.forEach(l=>{const d=document.createElement('div');d.className='leg';d.innerHTML=`<span class="sw ${l.dash?'dash':''}" style="border-top-color:${l.c}"></span><span>${l.t}</span>`;c.appendChild(d);});}
+function renderDash(items){const c=document.getElementById('dash');c.innerHTML='';items.forEach(it=>{const d=document.createElement('div');d.className='tile '+it[3];d.innerHTML=`<span class="led"></span><div class="k">${it[0]}</div><div class="v">${it[1]}</div><div class="m">${it[2]}</div>`;c.appendChild(d);});}
+const GLOSS=[['Distributor','Utility network operator that supplies 13.8 kV power to the compound (the primary source)'],['MVSU','Medium Voltage Supply Unit that receives and distributes 13.8 kV power'],['RMU','Ring Main Unit used for medium-voltage switching, protection and isolation'],['Transformer','Device that steps down voltage from 13.8 kV to 400V 3-phase'],['ATS','Automatic Transfer Switch that transfers loads between normal and generator supply'],['Generator','Backup power source (7 × 1400 kVA) used during utility failure'],['UPS','Uninterruptible Power Supply providing instant backup for critical electronics'],['400V 3-Phase','Low-voltage electrical supply used for compound loads'],['Fire Alarm System','Detects smoke, heat or manual fire alarm activation'],['NVR','Network Video Recorder used to record and manage IP camera footage'],['ASR','Central security/server system that integrates alarms, cameras and monitoring'],['CCTV','IP camera surveillance system'],['Network Switch','Connects cameras, NVR, ASR and control room systems'],['Control Room','Central room where operators observe alarms, cameras and power status']];
+function renderGloss(){const b=document.getElementById('glossBody');b.innerHTML='';GLOSS.forEach(g=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${g[0]}</td><td>${g[1]}</td>`;b.appendChild(tr);});}
+const overlay=document.getElementById('overlay'), modal=document.getElementById('modal');
+function openModal(id){
+  const c=compFor(id);const isAsr=(id==='asr');const name=isAsr?asrName:c.name;const def=isAsr?document.getElementById('asrDef').value:c.def;
+  modal.innerHTML=`<div class="modal-head"><div class="mi" style="color:${catColor(NMAP[id]?NMAP[id].cat:'power')}">${ICON_BIG[(NMAP[id]||{}).icon]||'▣'}</div><div><h3>${name}</h3><div class="tag">${c.tag||''}</div></div><button class="x" aria-label="Close" onclick="closeModal()">✕</button></div><div class="modal-body"><div class="mrow"><div class="k">Definition</div><div class="val">${def}</div></div><div class="mrow"><div class="k">Function</div><div class="val"><ul style="margin:0;padding-left:18px">${(c.fn||[]).map(f=>`<li>${f}</li>`).join('')}</ul></div></div><div class="io"><div class="cell"><div class="k">Input</div><div class="val">${c.in||'—'}</div></div><div class="cell"><div class="k">Output</div><div class="val">${c.out||'—'}</div></div></div><div class="mrow" style="margin-top:14px"><div class="k">Status</div><div class="statline"><span class="pill ok">Normal: ${c.normal||'—'}</span><span class="pill em">Emergency: ${c.fail||'—'}</span></div></div><div class="mrow"><div class="k">Related systems</div><div class="rel">${(c.rel||[]).map(r=>`<span>${r}</span>`).join('')}</div></div></div>`;
+  overlay.classList.add('show');
+}
+function closeModal(){overlay.classList.remove('show');}
+overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+document.getElementById('asrSave').onclick=()=>{asrName=document.getElementById('asrName').value.trim()||'ASR';const g=document.getElementById('n-asr');g.querySelector('.lab').textContent=asrName;const btn=document.getElementById('asrSave');const old=btn.textContent;btn.textContent='Saved ✓';setTimeout(()=>btn.textContent=old,1400);};
+async function snapshot(){const zone=document.getElementById('captureZone');return await html2canvas(zone,{backgroundColor:'#0a121b',scale:2,scrollX:0,scrollY:0,windowWidth:zone.scrollWidth,width:zone.scrollWidth,height:zone.scrollHeight});}
+document.getElementById('btnPng').onclick=async()=>{const btn=document.getElementById('btnPng');btn.disabled=true;const t=btn.innerHTML;btn.innerHTML='…';try{const cv=await snapshot();const a=document.createElement('a');a.download='compound-sld-'+current+'.png';a.href=cv.toDataURL('image/png');a.click();}catch(e){alert('Export failed: '+e.message);}btn.disabled=false;btn.innerHTML=t;};
+document.getElementById('btnPdf').onclick=async()=>{const btn=document.getElementById('btnPdf');btn.disabled=true;const t=btn.innerHTML;btn.innerHTML='…';try{const cv=await snapshot();const img=cv.toDataURL('image/png');const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();const r=Math.min((pw-40)/cv.width,(ph-70)/cv.height);const w=cv.width*r,h=cv.height*r;pdf.setFillColor(10,14,20);pdf.rect(0,0,pw,ph,'F');pdf.setTextColor(34,211,238);pdf.setFontSize(13);pdf.text('Compound Power, Security & Monitoring — '+SCEN[current].title,20,28);pdf.addImage(img,'PNG',(pw-w)/2,46,w,h);pdf.save('compound-sld-'+current+'.pdf');}catch(e){alert('Export failed: '+e.message);}btn.disabled=false;btn.innerHTML=t;};
+function clock(){const d=new Date();document.getElementById('clk').textContent=d.toTimeString().slice(0,8);}
+setInterval(clock,1000);clock();
+let three={ready:false,autorotate:true};
+function init3D(){
+  if(three.ready||!window.THREE){if(!window.THREE){document.getElementById('three-hint').textContent='3D engine unavailable in this browser.';}return;}
+  const wrap=document.getElementById('three-wrap');document.getElementById('three-hint').style.display='none';const T=THREE;
+  const scene=new T.Scene();scene.fog=new T.Fog(0x070d14,110,300);
+  const cam=new T.PerspectiveCamera(48,wrap.clientWidth/wrap.clientHeight,0.1,500);
+  const renderer=new T.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(wrap.clientWidth,wrap.clientHeight);wrap.appendChild(renderer.domElement);
+  scene.add(new T.AmbientLight(0x6688aa,0.7));const dir=new T.DirectionalLight(0xffffff,0.9);dir.position.set(30,50,20);scene.add(dir);const dir2=new T.DirectionalLight(0x22d3ee,0.25);dir2.position.set(-30,20,-20);scene.add(dir2);
+  const ground=new T.Mesh(new T.PlaneGeometry(220,160),new T.MeshStandardMaterial({color:0x0a141e,roughness:1,metalness:0}));ground.rotation.x=-Math.PI/2;ground.position.y=-0.1;scene.add(ground);
+  const grid=new T.GridHelper(220,44,0x13283a,0x0e1d2b);grid.position.y=0;scene.add(grid);
+  function label(text,color){const c=document.createElement('canvas');c.width=256;c.height=64;const x=c.getContext('2d');x.fillStyle='rgba(7,13,20,0.85)';roundRect(x,4,12,248,40,8);x.fill();x.strokeStyle=color||'#27374b';x.lineWidth=2;roundRect(x,4,12,248,40,8);x.stroke();x.fillStyle='#eaf2f9';x.font='600 22px monospace';x.textAlign='center';x.textBaseline='middle';x.fillText(text,128,33);const tex=new T.CanvasTexture(c);tex.anisotropy=4;const sp=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthTest:false}));sp.scale.set(11,2.75,1);return sp;}
+  function roundRect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
+  const blocks=[];
+  function block(id,name,col,w,h,d,x,z,labelText){const g=new T.Group();const mat=new T.MeshStandardMaterial({color:col,roughness:.45,metalness:.35,emissive:new T.Color(col).multiplyScalar(0.0),emissiveIntensity:1});const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),mat);mesh.position.y=h/2;g.add(mesh);const cap=new T.Mesh(new T.BoxGeometry(w*1.02,0.25,d*1.02),new T.MeshStandardMaterial({color:0x22d3ee,emissive:0x0a2a33,emissiveIntensity:.6,roughness:.4}));cap.position.y=h;g.add(cap);if(labelText){const lab=label(labelText,'#27374b');lab.position.set(0,h+2.4,0);g.add(lab);}g.position.set(x,0,z);g.userData={id,baseColor:col,mat,mesh};blocks.push(g);scene.add(g);return g;}
+  const dist=new T.Group();
+  const pole=new T.Mesh(new T.CylinderGeometry(.5,.7,18,8),new T.MeshStandardMaterial({color:0x9fb0c0,roughness:.6,metalness:.4}));pole.position.y=9;dist.add(pole);
+  [13,16].forEach(yy=>{const arm=new T.Mesh(new T.BoxGeometry(9,.5,.5),new T.MeshStandardMaterial({color:0x9fb0c0,metalness:.4,roughness:.6}));arm.position.y=yy;dist.add(arm);[-4,4].forEach(xx=>{const ins=new T.Mesh(new T.SphereGeometry(.5,10,10),new T.MeshStandardMaterial({color:0xe8edf3,emissive:0x223344,emissiveIntensity:.5}));ins.position.set(xx,yy+.6,0);dist.add(ins);});});
+  {const l=label('GRID DISTRIBUTOR','#e8edf3');l.position.set(0,20.5,0);dist.add(l);}
+  dist.position.set(-58,0,0);dist.userData={id:'dist'};scene.add(dist);blocks.push(dist);
+  block('mvsu','MVSU',0x355a72,7,7,7,-42,0,'MVSU 13.8kV');
+  [-13.5,-4.5,4.5,13.5].forEach((z,i)=>block('rmu'+(i+1),'RMU',0x2f4a5e,4.5,5,4.5,-28,z, i===0?'RMU ×4':''));
+  for(let i=0;i<8;i++){const z=-15.75+i*4.5;block('xf'+(i+1),'XFMR',0x3a6b86,4,5.5,4,-13,z, i===0?'TRANSFORMER ×8':'');}
+  for(let i=0;i<8;i++){const z=-15.75+i*4.5;block('ats'+(i+1),'ATS',0x4b7d63,4,4.5,4,2,z, i===0?'ATS ×8':'');}
+  for(let i=0;i<7;i++){block('gen'+(i+1),'GEN',0x6b5328,3.6,4,5,-13+i*5,26, i===3?'GENERATORS 7×1400kVA':'');}
+  block('lv400','LV',0x2e5a6e,8,4,26,20,0,'400V LV BUS');
+  block('control','LOADS',0x4a3d6b,10,9,16,40,0,'CRITICAL LOADS / CONTROL');
+  function spine(points,color){const geo=new T.BufferGeometry().setFromPoints(points.map(p=>new T.Vector3(p[0],p[1],p[2])));const line=new T.Line(geo,new T.LineBasicMaterial({color,transparent:true,opacity:.5}));scene.add(line);return points.map(p=>new T.Vector3(p[0],p[1],p[2]));}
+  const yL=4;
+  const utilPts=spine([[-58,yL,0],[-42,yL,0],[-28,yL,0],[-13,yL,0],[2,yL,0],[20,yL,0],[40,yL,0]],0x9fb0c0);
+  const genPts =spine([[-13,yL,26],[2,yL,26],[2,yL,0],[20,yL,0]],0xf59e0b);
+  function particleSet(pts,color,count){const arr=[];const mat=new T.MeshBasicMaterial({color});for(let i=0;i<count;i++){const m=new T.Mesh(new T.SphereGeometry(.5,10,10),mat.clone());m.userData={t:i/count};scene.add(m);arr.push(m);}return {pts,arr,mat,total:pathLen(pts)};}
+  function pathLen(pts){let L=0;for(let i=1;i<pts.length;i++)L+=pts[i].distanceTo(pts[i-1]);return L;}
+  function posAt(pts,t){let L=pathLen(pts)*t;for(let i=1;i<pts.length;i++){const d=pts[i].distanceTo(pts[i-1]);if(L<=d){return pts[i-1].clone().lerp(pts[i],d? L/d:0);}L-=d;}return pts[pts.length-1].clone();}
+  const pUtil=particleSet(utilPts,0xe8edf3,10);const pGen =particleSet(genPts,0xf59e0b,7);
+  const ray=new T.Raycaster(),mouse=new T.Vector2();
+  renderer.domElement.addEventListener('click',ev=>{if(dragMoved)return;const r=renderer.domElement.getBoundingClientRect();mouse.x=((ev.clientX-r.left)/r.width)*2-1;mouse.y=-((ev.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,cam);const meshes=[];blocks.forEach(b=>b.userData.mesh&&meshes.push(b.userData.mesh));const hit=ray.intersectObjects(meshes,false)[0];if(hit){let g=hit.object;while(g&&!g.userData.id)g=g.parent;if(g&&g.userData.id)openModal(g.userData.id);}});
+  let theta=0.7,phi=0.95,radius=92,target=new T.Vector3(-6,4,4);let dragging=false,dragMoved=false,px=0,py=0;
+  function applyCam(){cam.position.x=target.x+radius*Math.sin(phi)*Math.cos(theta);cam.position.z=target.z+radius*Math.sin(phi)*Math.sin(theta);cam.position.y=target.y+radius*Math.cos(phi);cam.lookAt(target);}
+  const cv=renderer.domElement;cv.style.cursor='grab';
+  cv.addEventListener('mousedown',e=>{dragging=true;dragMoved=false;px=e.clientX;py=e.clientY;cv.style.cursor='grabbing';});
+  window.addEventListener('mouseup',()=>{dragging=false;cv.style.cursor='grab';setTimeout(()=>dragMoved=false,30);});
+  window.addEventListener('mousemove',e=>{if(!dragging)return;const dx=e.clientX-px,dy=e.clientY-py;if(Math.abs(dx)+Math.abs(dy)>3)dragMoved=true;px=e.clientX;py=e.clientY;theta-=dx*0.006;phi=Math.max(0.25,Math.min(1.45,phi-dy*0.005));});
+  cv.addEventListener('wheel',e=>{e.preventDefault();radius=Math.max(40,Math.min(160,radius+e.deltaY*0.05));},{passive:false});
+  cv.addEventListener('touchstart',e=>{if(e.touches.length===1){dragging=true;px=e.touches[0].clientX;py=e.touches[0].clientY;}},{passive:true});
+  cv.addEventListener('touchmove',e=>{if(dragging&&e.touches.length===1){const dx=e.touches[0].clientX-px,dy=e.touches[0].clientY-py;px=e.touches[0].clientX;py=e.touches[0].clientY;theta-=dx*0.006;phi=Math.max(0.25,Math.min(1.45,phi-dy*0.005));}},{passive:true});
+  cv.addEventListener('touchend',()=>dragging=false);
+  three={ready:true,scene,cam,renderer,blocks,pUtil,pGen,posAt,T,reset(){theta=0.7;phi=0.95;radius=92;},autorotate:true,resize(){renderer.setSize(wrap.clientWidth,wrap.clientHeight);cam.aspect=wrap.clientWidth/wrap.clientHeight;cam.updateProjectionMatrix();}};
+  let last=performance.now();
+  function loop(now){if(!three.ready)return;const dt=(now-last)/1000;last=now;if(three.autorotate)theta+=dt*0.12;applyCam();const sc=three._scn||{util:true,gen:false,speed:0.06};pUtil.arr.forEach(m=>{m.userData.t=(m.userData.t+dt*0.06)%1;const p=posAt(pUtil.pts,m.userData.t);m.position.copy(p);m.visible=sc.util;});pGen.arr.forEach(m=>{m.userData.t=(m.userData.t+dt*0.09)%1;const p=posAt(pGen.pts,m.userData.t);m.position.copy(p);m.visible=sc.gen;});renderer.render(scene,cam);requestAnimationFrame(loop);}
+  requestAnimationFrame(loop);
+  document.getElementById('btn3dRot').onclick=function(){three.autorotate=!three.autorotate;this.textContent='⟳ Auto-rotate: '+(three.autorotate?'ON':'OFF');};
+  document.getElementById('btn3dReset').onclick=()=>three.reset();
+  window.addEventListener('resize',()=>{if(three.ready&&document.getElementById('view3d').style.display!=='none')three.resize();});
+  window.sync3D=function(key,fk){if(!three.ready)return;const genOn=(SCEN[key].nodes||{}).gen==='on';const onGen=fk==='outage';three._scn={util:!onGen,gen:genOn};three.blocks.forEach(b=>{const u=b.userData;if(!u||!u.mat)return;let c=u.baseColor,emi=0x000000,ei=0;if(u.id==='dist'||u.id==='mvsu'){ if(onGen){c=0x2a3640;} }if(u.id&&u.id.startsWith('gen')&&u.id!=='genbus'){ if(genOn){emi=0xf59e0b;ei=.6;} }if(u.id&&u.id.startsWith('ats')){ if(onGen){emi=0xf59e0b;ei=.4;} else {emi=0x16351f;ei=.4;} }if(u.id==='control'&&key==='fire'){emi=0xef4444;ei=.8;}if(u.id==='lv400'){emi=0x0a2a33;ei=.5;}u.mat.color.setHex(c);u.mat.emissive.setHex(emi);u.mat.emissiveIntensity=ei;});document.getElementById('three-tip').textContent='FLOW · '+SCEN[key].flow;pUtil.arr.forEach(m=>m.material.color.setHex(key==='fire'?0xef4444:0xe8edf3));};
+  sync3D(current,BASE[current]||current);
+}
+const SEQ=[
+  {src:'util',ups:100,ust:'100% · charging',cls:'ok',title:'1 · Normal supply',desc:'Load is fed from the distributor through the transformer and ATS (NORMAL source). UPS batteries are fully charged.'},
+  {src:'dead',ups:100,ust:'100% · standby',cls:'ok',title:'2 · Utility loss (t = 0)',desc:'The distributor / line supply fails. Voltage on the normal source collapses. The ATS has not transferred yet.'},
+  {src:'dead',ups:96,ust:'96% · DISCHARGING',cls:'info',title:'3 · UPS bridges instantly',desc:'The UPS picks up the critical electronic loads with zero interruption, covering the gap while the generators are not yet available.'},
+  {src:'dead',ups:90,ust:'90% · DISCHARGING',cls:'info',title:'4 · ATS sends start signal',desc:'The ATS confirms loss of the normal source (after its sensing delay) and commands the standby generators to start.'},
+  {src:'cranking',ups:84,ust:'84% · DISCHARGING',cls:'info',title:'5 · Generators warm up',desc:'Generators crank and ramp to rated voltage and frequency (typ. 5–10 s). The UPS keeps bridging the sensitive loads.'},
+  {src:'transfer',ups:80,ust:'80% · DISCHARGING',cls:'warn',title:'6 · ATS transfers (break-before-make)',desc:'Open-transition transfer: the ATS opens the utility breaker, then closes the generator breaker. The load is moved to the generator supply.'},
+  {src:'gen',ups:86,ust:'86% · RECHARGING',cls:'info',title:'7 · Load on generator',desc:'Critical loads now run on generator power. The UPS stops discharging and begins recharging from the generator-backed bus.'},
+  {src:'restore',ups:96,ust:'96% · recharging',cls:'info',title:'8 · Utility restored',desc:'The distributor returns. The ATS verifies the normal source is stable for a set time before transferring back.'},
+  {src:'util',ups:100,ust:'100% · charging',cls:'ok',title:'9 · Re-transfer & cool-down',desc:'The ATS transfers the load back to utility power. Generators run a short cool-down, then stop. UPS returns to full charge.'},
+];
+let seqIdx=0,seqTimer=null,seqEls=null;
+function buildSeqSvg(){
+  const s=document.getElementById('seqSvg');s.innerHTML='';
+  function E(t,a){const e=document.createElementNS(SVG,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+  function box(x,y,w,h,fill,stroke){const r=E('rect',{x,y,width:w,height:h,rx:10,fill,stroke,'stroke-width':1.6});s.appendChild(r);return r;}
+  function txt(x,y,t,o={}){const e=E('text',{x,y,fill:o.fill||'#cdd9e6','font-family':'monospace','font-size':o.s||13,'text-anchor':o.a||'middle','font-weight':o.w||400});e.textContent=t;s.appendChild(e);return e;}
+  const util=box(40,40,180,70,'#0e1a26','#27374b'); txt(130,72,'UTILITY',{w:600,s:14}); const utilState=txt(130,94,'DISTRIBUTOR',{fill:'#8294a8',s:10});
+  const gen=box(40,250,180,70,'#0e1a26','#27374b'); txt(130,282,'GENERATORS',{w:600,s:13}); const genState=txt(130,304,'STANDBY',{fill:'#8294a8',s:10});
+  const ats=box(360,150,150,90,'#0e2230','#27374b'); txt(435,188,'ATS',{w:700,s:16,fill:'#22d3ee'}); const atsState=txt(435,212,'NORMAL',{fill:'#8294a8',s:10});
+  const load=box(680,150,180,90,'#0e1a26','#27374b'); txt(770,182,'CRITICAL',{w:600,s:13}); txt(770,202,'LOADS',{w:600,s:13});
+  const ups=box(560,40,120,60,'#160e26','#3a2a5e'); txt(620,68,'UPS',{w:700,s:14,fill:'#a855f7'}); const upsState=txt(620,88,'CHARGE',{fill:'#8294a8',s:9});
+  const wUtil=E('path',{d:'M220 75 H300 V185 H360',fill:'none',stroke:'#34d399','stroke-width':4,'stroke-linecap':'round'});s.appendChild(wUtil);
+  const wGen=E('path',{d:'M220 285 H300 V205 H360',fill:'none',stroke:'#3a4658','stroke-width':4,'stroke-linecap':'round'});s.appendChild(wGen);
+  const wLoad=E('path',{d:'M510 195 H680',fill:'none',stroke:'#34d399','stroke-width':4,'stroke-linecap':'round'});s.appendChild(wLoad);
+  const wUps=E('path',{d:'M620 100 V150',fill:'none',stroke:'#3a2a5e','stroke-width':3,'stroke-dasharray':'6 5','stroke-linecap':'round'});s.appendChild(wUps);
+  const blade=E('line',{x1:'410',y1:'195',x2:'410',y2:'160',stroke:'#22d3ee','stroke-width':5,'stroke-linecap':'round'});s.appendChild(blade);
+  seqEls={util,gen,ats,load,ups,utilState,genState,atsState,upsState,wUtil,wGen,wLoad,wUps,blade};
+}
+function buildSeqTimeline(){const c=document.getElementById('seqTimeline');c.innerHTML='';SEQ.forEach((_,i)=>{const d=document.createElement('div');d.className='t';d.onclick=()=>{stopSeq();setSeq(i);};c.appendChild(d);});}
+function setSeq(i){
+  seqIdx=i;const st=SEQ[i];
+  document.getElementById('seqNum').textContent='STEP '+(i+1)+' / '+SEQ.length;
+  document.getElementById('seqTitle').textContent=st.title;document.getElementById('seqDesc').textContent=st.desc;
+  const bar=document.getElementById('seqUps');bar.style.width=st.ups+'%';bar.style.background=st.cls==='info'?'linear-gradient(90deg,#a855f7,#22d3ee)':st.cls==='warn'?'linear-gradient(90deg,#f59e0b,#fbbf24)':'linear-gradient(90deg,#34d399,#10b981)';
+  document.getElementById('seqUpsState').textContent=st.ust;
+  document.querySelectorAll('#seqTimeline .t').forEach((t,k)=>{t.classList.toggle('done',k<=i);t.classList.toggle('cur',k===i);});
+  if(!seqEls)return;
+  const grn='#34d399',org='#f59e0b',red='#ef4444',gry='#3a4658',cyan='#22d3ee';const e=seqEls;
+  let utilWire=gry,genWire=gry,loadWire=grn,bladeX=410,atsTxt='NORMAL',utilTxt='DISTRIBUTOR',genTxt='STANDBY',upsTxt='CHARGE',loadCol=grn,bladeCol=cyan,utilBox='#27374b',genBox='#27374b';
+  switch(st.src){
+    case'util':utilWire=grn;atsTxt='ON UTILITY';utilTxt='ONLINE';bladeX=410;break;
+    case'dead':utilWire=red;utilTxt='FAILED';atsTxt='SENSING LOSS';loadWire= (st.ups<100?cyan:gry);loadCol=cyan;utilBox=red;break;
+    case'cranking':utilWire=red;utilTxt='FAILED';genTxt='CRANKING';atsTxt='START SIGNAL';loadWire=cyan;loadCol=cyan;utilBox=red;genWire=org;break;
+    case'transfer':utilWire=red;utilTxt='OPEN';genTxt='READY';atsTxt='TRANSFERRING';bladeX=435;loadWire=cyan;loadCol=cyan;genWire=org;genBox=org;break;
+    case'gen':genWire=org;genTxt='SUPPLYING';atsTxt='ON GENERATOR';bladeX=460;loadWire=org;loadCol=org;genBox=org;utilTxt='FAILED';utilWire=red;break;
+    case'restore':genWire=org;genTxt='SUPPLYING';utilTxt='RESTORED';utilWire=grn;atsTxt='VERIFYING';bladeX=460;loadWire=org;loadCol=org;genBox=org;break;
+  }
+  e.wUtil.setAttribute('stroke',utilWire);e.wGen.setAttribute('stroke',genWire);e.wLoad.setAttribute('stroke',loadWire);
+  e.blade.setAttribute('x1',bladeX);e.blade.setAttribute('x2',bladeX);e.blade.setAttribute('stroke',bladeCol);
+  e.atsState.textContent=atsTxt;e.utilState.textContent=utilTxt;e.genState.textContent=genTxt;
+  e.upsState.textContent=(st.ups<100&&st.cls==='info')?'BACKUP':'CHARGE';
+  e.util.setAttribute('stroke',utilBox);e.gen.setAttribute('stroke',genBox);
+  e.ups.setAttribute('stroke',(st.cls==='info'&&st.ups<100)?'#a855f7':'#3a2a5e');
+}
+function nextSeq(){setSeq((seqIdx+1)%SEQ.length);}
+function playSeq(){stopSeq();document.getElementById('seqPlay').textContent='❚❚ Pause';seqTimer=setInterval(()=>{ if(seqIdx>=SEQ.length-1){stopSeq();return;} nextSeq(); },2300);}
+function stopSeq(){if(seqTimer){clearInterval(seqTimer);seqTimer=null;}document.getElementById('seqPlay').textContent='▶ Play';}
+function switchView(v){
+  document.querySelectorAll('#viewSwitch button').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
+  document.getElementById('view2d').style.display = v==='2d'?'':'none';
+  document.getElementById('view3d').style.display = v==='3d'?'':'none';
+  document.getElementById('viewSeq').style.display = v==='seq'?'':'none';
+  if(v==='3d'){ init3D(); if(three.ready){three.resize();sync3D(current,BASE[current]||current);} }
+  if(v==='seq'){ if(!seqEls){buildSeqSvg();buildSeqTimeline();} setSeq(seqIdx); }
+}
+document.getElementById('viewSwitch').addEventListener('click',e=>{const b=e.target.closest('button');if(b)switchView(b.dataset.v);});
+document.getElementById('seqPlay').onclick=()=>{ if(seqTimer)stopSeq(); else playSeq(); };
+document.getElementById('seqStep').onclick=()=>{stopSeq();nextSeq();};
+document.getElementById('seqReset').onclick=()=>{stopSeq();setSeq(0);};
+build();renderScnBtns();renderLegend();renderGloss();applyScenario('normal');
+</script>
+</body>
+</html>

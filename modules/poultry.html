@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Poultry Breast Production Line — Interactive 3D Training Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060a12;
+  --panel:#0f1726ee;
+  --panel-solid:#101a2b;
+  --border:#22314a;
+  --steel:#8a96a8;
+  --text:#e8f0fb;
+  --text-dim:#8fa3c2;
+  --accept:#22c55e;
+  --reject:#ef4444;
+  --pack:#f59e0b;
+  --cool:#38bdf8;
+  --frozen:#3b82f6;
+  --accent:#60a5fa;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow:hidden;}
+#canvas-wrap{position:fixed;inset:0;}
+#canvas-wrap canvas{display:block;touch-action:none;}
+
+/* ---------- Top bar ---------- */
+#topbar{
+  position:fixed; top:0; left:0; right:0; z-index:20;
+  background:linear-gradient(180deg, rgba(6,10,18,0.94), rgba(6,10,18,0.75));
+  border-bottom:1px solid var(--border);
+  padding:10px 18px 8px;
+  backdrop-filter: blur(6px);
+}
+#topbar .title-row{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+#topbar h1{font-size:16px; margin:0; font-weight:700; letter-spacing:.3px;}
+#topbar .sub{font-size:11.5px; color:var(--text-dim); letter-spacing:1.2px; text-transform:uppercase;}
+
+#shift-rail{position:relative; margin-top:8px;}
+#shift-buttons{display:flex; gap:6px; overflow-x:auto; scrollbar-width:none;}
+#shift-buttons::-webkit-scrollbar{display:none;}
+.shift-btn{
+  flex:1 1 0; min-width:118px; background:#0d1726; border:1px solid var(--border); border-radius:10px;
+  color:var(--text-dim); padding:7px 8px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
+  font-family:'Rajdhani',sans-serif; transition:.15s;
+}
+.shift-btn .en{font-size:13px; font-weight:700; color:var(--text); letter-spacing:.3px;}
+.shift-btn .hrs{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent);}
+.shift-btn.active{background:#16324f; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset;}
+#shift-now-indicator{
+  position:absolute; bottom:-6px; width:2px; height:6px; background:var(--pack);
+  box-shadow:0 0 6px var(--pack);
+}
+
+/* ---------- Floating buttons (desktop) ---------- */
+#tool-rail{
+  position:fixed; top:110px; inset-inline-start:16px; z-index:18;
+  display:flex; flex-direction:column; gap:8px;
+}
+.tool-btn{
+  background:var(--panel); border:1px solid var(--border); color:var(--text);
+  border-radius:10px; padding:9px 12px; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:600;
+  cursor:pointer; display:flex; align-items:center; gap:8px; white-space:nowrap;
+}
+.tool-btn:hover{border-color:var(--accent);}
+.tool-btn.active{background:#3b2410; border-color:var(--pack); color:var(--pack);}
+.tool-btn .ico{font-size:15px;}
+
+#area-nav{position:fixed; top:110px; inset-inline-end:16px; z-index:18; display:flex; flex-direction:column; gap:6px; width:168px;}
+.area-jump{
+  background:var(--panel); border:1px solid var(--border); color:var(--text-dim);
+  border-radius:9px; padding:7px 10px; text-align:start; cursor:pointer; font-family:'Rajdhani',sans-serif;
+}
+.area-jump b{color:var(--text); font-size:13px; font-weight:700; display:block;}
+.area-jump span{font-size:10.5px; letter-spacing:.5px;}
+.area-jump:hover{border-color:var(--accent);}
+
+/* ---------- Machine info panel ---------- */
+#machine-panel{
+  position:fixed; bottom:0; inset-inline-start:0; width:380px; max-width:94vw; z-index:30;
+  background:var(--panel-solid); border-top:1px solid var(--border); border-inline-end:1px solid var(--border);
+  border-radius:14px 14px 0 0; padding:16px 18px 20px; transform:translateY(110%); transition:transform .28s ease;
+  box-shadow:0 -10px 40px rgba(0,0,0,0.5);
+}
+#machine-panel.open{transform:translateY(0);}
+#machine-panel .row{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;}
+#mp-name{font-size:19px; font-weight:700; margin:0;}
+#mp-close{background:none; border:1px solid var(--border); color:var(--text-dim); width:28px; height:28px; border-radius:8px; cursor:pointer;}
+.mp-field{margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);}
+.mp-field .lbl{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:3px;}
+.mp-field .val{font-size:14px; line-height:1.6; font-family:sans-serif;}
+.mp-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px;}
+.mp-chip{background:#0d1726; border:1px solid var(--border); border-radius:8px; padding:8px 10px;}
+.mp-chip .lbl{font-size:10.5px; color:var(--text-dim);}
+.mp-chip .val{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--accent); margin-top:2px;}
+
+/* ---------- Dashboard panel ---------- */
+#dashboard-panel{
+  position:fixed; top:0; inset-inline-end:0; bottom:0; width:340px; max-width:92vw; z-index:35;
+  background:var(--panel-solid); border-inline-start:1px solid var(--border);
+  transform:translateX(110%); transition:transform .28s ease; padding:16px 16px 90px; overflow-y:auto;
+}
+#dashboard-panel.open{transform:translateX(0);}
+#dashboard-panel .dh{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+#dashboard-panel h2{font-size:16px; margin:0; font-weight:700;}
+#dashboard-panel h2 span{display:block; font-size:11px; color:var(--text-dim); font-weight:500; letter-spacing:1px;}
+.db-section{margin-bottom:14px;}
+.db-section h3{font-size:11.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); margin:0 0 6px; font-weight:700;}
+.db-row{display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-bottom:1px solid #182337; font-family:sans-serif;}
+.db-row .val{font-family:'JetBrains Mono',monospace; color:var(--text);}
+#dash-close{background:none; border:1px solid var(--border); color:var(--text-dim); width:28px; height:28px; border-radius:8px; cursor:pointer;}
+.product-row{display:flex; gap:6px; margin-top:6px;}
+.product-btn{flex:1; background:#0d1726; border:1px solid var(--border); color:var(--text-dim); border-radius:8px; padding:6px; font-size:12px; cursor:pointer; font-family:'Rajdhani',sans-serif; font-weight:600;}
+.product-btn.active{background:#123321; border-color:var(--accept); color:var(--accept);}
+
+/* ---------- Legend ---------- */
+#legend{position:fixed; bottom:14px; inset-inline-end:16px; z-index:16; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:8px 12px; font-size:11px; display:flex; gap:10px; flex-wrap:wrap; max-width:260px; font-family:sans-serif;}
+.leg-item{display:flex; align-items:center; gap:5px; color:var(--text-dim);}
+.leg-dot{width:9px;height:9px;border-radius:50%;}
+
+/* ---------- Tour bar ---------- */
+#tour-bar{position:fixed; left:50%; bottom:16px; transform:translateX(-50%) translateY(140%); width:min(560px,92vw); z-index:32; background:var(--panel-solid); border:1px solid var(--border); border-radius:14px; padding:14px 16px; transition:transform .3s ease;}
+#tour-bar.open{transform:translateX(-50%) translateY(0);}
+#tour-title{font-size:16px; font-weight:700; margin:0;}
+#tour-desc{font-size:13.5px; margin:8px 0 2px; line-height:1.6; font-family:sans-serif; color:var(--text-dim);}
+#tour-controls{display:flex; gap:8px; margin-top:10px; align-items:center;}
+#tour-controls button{background:#0d1726; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:7px 12px; cursor:pointer; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:600;}
+#tour-controls button:disabled{opacity:.4; cursor:default;}
+#tour-progress{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); margin-inline-start:auto;}
+
+/* ---------- Mobile bottom nav ---------- */
+#mobile-nav{position:fixed; left:0; right:0; bottom:0; z-index:40; display:none; background:var(--panel-solid); border-top:1px solid var(--border); padding:6px 4px calc(env(safe-area-inset-bottom,0) + 6px);}
+#mobile-nav .mn-row{display:flex; justify-content:space-around;}
+.mn-btn{background:none; border:none; color:var(--text-dim); display:flex; flex-direction:column; align-items:center; gap:2px; font-family:'Rajdhani',sans-serif; font-size:10.5px; font-weight:600; padding:4px 6px;}
+.mn-btn .ico{font-size:18px;}
+.mn-btn.active{color:var(--accent);}
+
+body.is-mobile #tool-rail{display:none;}
+body.is-mobile #area-nav{display:none;}
+body.is-mobile #legend{display:none;}
+body.is-mobile #mobile-nav{display:block;}
+body.is-mobile #machine-panel{inset-inline-start:0; inset-inline-end:0; width:auto; max-width:100%; border-radius:16px 16px 0 0; bottom:64px;}
+body.is-mobile #dashboard-panel{top:auto; bottom:64px; height:70vh; width:100%; max-width:100%; border-radius:16px 16px 0 0; transform:translateY(120%);}
+body.is-mobile #dashboard-panel.open{transform:translateY(0);}
+body.is-mobile #topbar h1{font-size:14px;}
+body.is-mobile .shift-btn{min-width:96px;}
+body.is-mobile #tour-bar{bottom:70px;}
+
+body.maint-mode #topbar{border-bottom-color:#7c5a1c;}
+body.maint-mode:before{content:'Daily Preventive Maintenance Active — 01:00–05:00';position:fixed; top:0; left:0; right:0; z-index:50; background:#3a2a0c; color:#f5c451; text-align:center; font-size:12px; padding:3px; letter-spacing:1px; font-family:'Rajdhani',sans-serif; font-weight:600;}
+body.maint-mode #topbar{margin-top:22px;}
+body.weekly-mode:before{content:'Weekly Preventive Maintenance Active — Friday 02:00–11:00'; background:#26123a; color:#c084fc;}
+
+/* subtle vignette for depth */
+#canvas-wrap:after{content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at center, transparent 55%, rgba(2,4,10,0.55) 100%);}
+
+::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:#22314a;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div id="canvas-wrap"></div>
+
+<!-- Top bar: title + shift timeline -->
+<div id="topbar">
+  <div class="title-row">
+    <h1>Poultry Breast Production Line</h1>
+    <span class="sub">Interactive 3D Digital Twin</span>
+  </div>
+  <div id="shift-rail">
+    <div id="shift-buttons"></div>
+    <div id="shift-now-indicator"></div>
+  </div>
+</div>
+
+<!-- Desktop tool rail -->
+<div id="tool-rail">
+  <button class="tool-btn" id="view-home"><span class="ico">⌂</span><span>Home — All Sections</span></button>
+  <button class="tool-btn" id="view-top"><span class="ico">⬒</span><span>Top View</span></button>
+  <button class="tool-btn" id="maint-btn"><span class="ico">🛠</span><span>Daily PM (01–05)</span></button>
+  <button class="tool-btn" id="weekly-btn"><span class="ico">🗓</span><span>Weekly PM (Fri 02–11)</span></button>
+  <button class="tool-btn" id="tour-start"><span class="ico">▶</span><span>Start Tour</span></button>
+  <button class="tool-btn" id="dash-toggle"><span class="ico">▤</span><span>Dashboard</span></button>
+</div>
+
+<!-- Area quick nav -->
+<div id="area-nav">
+  <button class="area-jump" data-area="frozen"><b>Frozen Storage</b><span>-16°C</span></button>
+  <button class="area-jump" data-area="defrost"><b>Defrosting</b><span>6 Rooms → 1°C</span></button>
+  <button class="area-jump" data-area="area78"><b>Area 7 / 8</b><span>Scan Midi</span></button>
+  <button class="area-jump" data-area="area19"><b>Area 19</b><span>5 Lines</span></button>
+  <button class="area-jump" data-area="shawarma"><b>Shawarma Line</b><span>Rejected Cuts</span></button>
+  <button class="area-jump" data-area="area18"><b>Area 18</b><span>Strips / Shrimp</span></button>
+  <button class="area-jump" data-area="packaging"><b>Dispatch</b><span>Cartons Out</span></button>
+</div>
+
+<!-- Legend -->
+<div id="legend">
+  <div class="leg-item"><span class="leg-dot" style="background:#3b82f6"></span>Frozen -16°C</div>
+  <div class="leg-item"><span class="leg-dot" style="background:#38bdf8"></span>Defrosting</div>
+  <div class="leg-item"><span class="leg-dot" style="background:#22c55e"></span>Accepted</div>
+  <div class="leg-item"><span class="leg-dot" style="background:#ef4444"></span>Rejected</div>
+  <div class="leg-item"><span class="leg-dot" style="background:#f59e0b"></span>Packaging</div>
+  <div class="leg-item"><span class="leg-dot" style="background:#0ea5e9"></span>GCM Cooling</div>
+</div>
+
+<!-- Machine info panel -->
+<div id="machine-panel">
+  <div class="row">
+    <p id="mp-name">—</p>
+    <button id="mp-close">✕</button>
+  </div>
+  <div class="mp-field"><div class="lbl">Function</div>
+    <div class="val" id="mp-func">—</div>
+  </div>
+  <div class="mp-field"><div class="lbl">Input</div><div class="val" id="mp-input">—</div></div>
+  <div class="mp-field"><div class="lbl">Output</div><div class="val" id="mp-output">—</div></div>
+  <div class="mp-grid">
+    <div class="mp-chip"><div class="lbl">Time</div><div class="val" id="mp-time">—</div></div>
+    <div class="mp-chip"><div class="lbl">Temp</div><div class="val" id="mp-temp">—</div></div>
+    <div class="mp-chip"><div class="lbl">Status</div><div class="val" id="mp-status">—</div></div>
+  </div>
+  <div class="mp-field"><div class="lbl">Notes</div><div class="val" id="mp-notes" style="font-size:12.5px; color:var(--text-dim);">—</div></div>
+</div>
+
+<!-- Dashboard panel -->
+<div id="dashboard-panel">
+  <div class="dh">
+    <h2>Dashboard<span>Production Dashboard</span></h2>
+    <button id="dash-close">✕</button>
+  </div>
+
+  <div class="db-section">
+    <h3>Production Plan</h3>
+    <div class="product-row">
+      <button class="product-btn active" data-product="chicken">Chicken</button>
+      <button class="product-btn" data-product="fish">Fish</button>
+      <button class="product-btn" data-product="other">Other</button>
+    </div>
+    <div class="db-row"><span>Current Product</span><span class="val" id="db-product">Chicken</span></div>
+    <div class="db-row"><span>Shift</span><span class="val" id="db-phase">—</span></div>
+    <div class="db-row"><span>Line State</span><span class="val" id="db-state">—</span></div>
+  </div>
+
+  <div class="db-section">
+    <h3>Output</h3>
+    <div class="db-row"><span>Accepted Pieces</span><span class="val" id="db-accepted">0</span></div>
+    <div class="db-row"><span>Rejected Pieces</span><span class="val" id="db-rejected">0</span></div>
+    <div class="db-row"><span>To Shawarma Line</span><span class="val" id="db-shawarma">0</span></div>
+    <div class="db-row"><span>Finished Packages</span><span class="val" id="db-packages">0</span></div>
+    <div class="db-row"><span>Cartons Printed</span><span class="val" id="db-cartons">0</span></div>
+  </div>
+
+  <div class="db-section">
+    <h3>Cold Chain</h3>
+    <div class="db-row"><span>Frozen Storage Temp</span><span class="val" id="db-frozen-temp">-16°C</span></div>
+    <div id="db-rooms"></div>
+  </div>
+
+  <div class="db-section">
+    <h3>Scan Midi &amp; Dosing</h3>
+    <div class="db-row"><span>Scan Midi Temp</span><span class="val" id="db-scanmidi-temp">1°C</span></div>
+    <div class="db-row"><span>Dosing System</span><span class="val" id="db-dosing">—</span></div>
+  </div>
+
+  <div class="db-section">
+    <h3>Maintenance</h3>
+    <div class="db-row"><span>Daily PM Window</span><span class="val" id="db-maint-time">01:00–05:00</span></div>
+    <div class="db-row"><span>Weekly PM Window</span><span class="val" id="db-weekly-time">Fri 02:00–11:00</span></div>
+  </div>
+</div>
+
+<!-- Tour bar -->
+<div id="tour-bar">
+  <p id="tour-title">—</p>
+  <p id="tour-desc">—</p>
+  <div id="tour-controls">
+    <button id="tour-back">Back</button>
+    <button id="tour-next">Next</button>
+    <button id="tour-end">End Tour</button>
+    <span id="tour-progress">1 / 7</span>
+  </div>
+</div>
+
+<!-- Mobile bottom nav -->
+<div id="mobile-nav">
+  <div class="mn-row">
+    <button class="mn-btn active" id="m-home"><span class="ico">⌂</span>Home</button>
+    <button class="mn-btn" id="m-flow"><span class="ico">▶</span>Tour</button>
+    <button class="mn-btn" id="m-areas"><span class="ico">▦</span>Areas</button>
+    <button class="mn-btn" id="m-dash"><span class="ico">▤</span>Data</button>
+    <button class="mn-btn" id="m-maint"><span class="ico">🛠</span>Maint</button>
+  </div>
+</div>
+
+<script src="../vendor/three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>')</script>
+<script>window.THREE||document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>window.THREE||document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>window.addEventListener('DOMContentLoaded',function(){if(!window.THREE){var d=document.createElement('div');d.setAttribute('role','alert');d.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999;background:#2a1113;border:1px solid #ff5163;color:#ffd7db;font:12px monospace;padding:9px 16px;border-radius:10px;max-width:92vw;text-align:center';d.textContent='3D engine failed to load \u2014 check your internet connection. | \u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0645\u062d\u0631\u0643 \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u2014 \u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0627\u062a\u0635\u0627\u0644.';document.body.appendChild(d);}});</script>
+<script>
+/* ============================================================
+   Poultry Line 3D Trainer — Core (v3)
+   - Physically separated sections with divider walls & gates
+   - Detailed composite machine models (legs, hoods, panels, lamps)
+   - Section focus mode (dims all other areas)
+   - Weekly Friday maintenance phase (02:00–11:00)
+   ============================================================ */
+
+/* ---------- Error resilience ---------- */
+let _fatalShown = false;
+function showFatalError(msg){
+  if (_fatalShown) return;
+  _fatalShown = true;
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;inset:0;z-index:999;background:#060a12;color:#e8f0fb;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:sans-serif;';
+  div.innerHTML = '<div style="max-width:420px"><div style="font-size:18px;font-weight:700;margin-bottom:8px;">Unable to start the 3D view</div><div style="font-size:13px;color:#8fa3c2;line-height:1.6;">'+msg+'</div></div>';
+  document.body.appendChild(div);
+}
+let _lastErrLogged = 0;
+window.addEventListener('error', function(e){
+  const now = Date.now();
+  if (now - _lastErrLogged < 1500) return;
+  _lastErrLogged = now;
+  console.warn('[App] runtime error caught:', e.message || e.error || e);
+});
+
+/* ---------- Global state ---------- */
+const STATE = {
+  phase: 'shift1',              // shift1 | shift2 | maintenance | prep | weekly
+  maintenance: false,
+  product: 'chicken',
+  selectedMachine: null,
+  focusedArea: null,            // area key or null = show all
+  tourActive: false,
+  tourIndex: 0,
+  mobile: window.innerWidth < 860,
+  accepted: 0, rejected: 0, shawarma: 0, cartons: 0, packages: 0,
+};
+
+/* ---------- Colors ---------- */
+const COLORS = {
+  frozen: 0x1e3a8a,
+  defrost: 0x38bdf8,
+  accept: 0x22c55e,
+  reject: 0xef4444,
+  pack: 0xf59e0b,
+  cool: 0x0ea5e9,
+  steel: 0xb8c2d0,
+  steelDark: 0x4b5563,
+  floor: 0x0e1522,
+  wall: 0x18243a,
+};
+
+/* ---------- Shift phases (incl. weekly Friday PM) ---------- */
+const SHIFT_PHASES = [
+  { key: 'shift1',      start: 7,  end: 16, en: 'First Shift',            hrs:'07:00–16:00' },
+  { key: 'shift2',      start: 16, end: 25, en: 'Second Shift',           hrs:'16:00–01:00' },
+  { key: 'maintenance', start: 1,  end: 5,  en: 'Daily PM + Cleaning',    hrs:'01:00–05:00' },
+  { key: 'prep',        start: 5,  end: 7,  en: 'Machine Preparation',    hrs:'05:00–07:00' },
+  { key: 'weekly',      start: 2,  end: 11, en: 'Weekly PM (Friday)',     hrs:'Fri 02:00–11:00' },
+];
+const MAINT_PHASES = ['maintenance','weekly'];
+
+/* ---------- Areas — widely separated sections ---------- */
+const AREAS = [
+  { key: 'frozen',   x: -150, z: 0,  w: 34, d: 64, en: 'Frozen Storage',  sub:'-16°C' },
+  { key: 'defrost',  x: -105, z: 0,  w: 30, d: 64, en: 'Defrosting',      sub:'6 Rooms → 1°C' },
+  { key: 'area78',   x: -60,  z: 0,  w: 30, d: 64, en: 'Area 7 / 8',      sub:'Scan Midi' },
+  { key: 'shawarma', x: -18,  z: 38, w: 42, d: 22, en: 'Shawarma Line',   sub:'Rejected Cuts' },
+  { key: 'area19',   x: 12,   z: 0,  w: 88, d: 64, en: 'Area 19',         sub:'5 Lines' },
+  { key: 'area18',   x: 128,  z: 0,  w: 100,d: 64, en: 'Area 18',         sub:'Strips / Shrimp' },
+  { key: 'packaging',x: 196,  z: 0,  w: 26, d: 64, en: 'Dispatch',        sub:'Cartons Out' },
+];
+
+/* Divider walls between sections (with gate openings for conveyors) */
+const DIVIDERS = [
+  {x: -128, gateZ: 0},
+  {x: -87,  gateZ: 0},
+  {x: -42,  gateZ: 0},
+  {x: 74,   gateZ: 0},
+  {x: 180,  gateZ: 0},
+];
+
+/* ---------- Machines ---------- */
+const MACHINES = [];
+
+// Frozen storage
+MACHINES.push({
+  id:'frozen_storage', area:'frozen', type:'room', x:-150, z:0, w:26, h:14, d:26,
+  color: COLORS.frozen,
+  name:{en:'Frozen Storage Area'},
+  func:{en:'Stores frozen product before production begins'},
+  input:{en:'Chicken / Fish per production plan'},
+  output:{en:'Frozen cartons to defrosting rooms'},
+  time:'\u2014', temp:'-16\u00b0C',
+  notes:{en:'Product moved via carts/forklifts per the daily production plan.'}
+});
+// Pallet stacks inside frozen storage (decor, clickable as part of room)
+for (let i=0;i<4;i++){
+  MACHINES.push({
+    id:'pallet_'+i, area:'frozen', type:'pallet', x:-158+ (i%2)*8, z:-8 + Math.floor(i/2)*10, w:5,h:4,d:5,
+    color: 0x8b5e3c, decor:true
+  });
+}
+
+// Defrosting rooms x6
+for (let i=1;i<=6;i++){
+  const zpos = -20 + (i-1)*8;
+  MACHINES.push({
+    id:'defrost_room_'+i, area:'defrost', type:'room', x:-105, z:zpos, w:12, h:10, d:6,
+    color: COLORS.defrost,
+    name:{en:'Defrosting Room '+i},
+    func:{en:'Gradually raises product temperature until ready'},
+    input:{en:'Frozen product at -16\u00b0C'},
+    output:{en:'Product ready at 1\u00b0C to Area 7'},
+    time:'Per room schedule', temp:'\u2192 1\u00b0C',
+    notes:{en:'Status: Frozen / Defrosting / Ready \u2014 entry & exit time logged.'}
+  });
+}
+
+// Area 7/8
+MACHINES.push({
+  id:'scan_midi', area:'area78', type:'machine', x:-62, z:0, w:16, h:7, d:9,
+  color: COLORS.steel, hood:true, panel:true,
+  name:{en:'Rinsing Scan Midi'},
+  func:{en:'Rinses product, checks size, sorts accepted/rejected pieces'},
+  input:{en:'Product after defrosting'},
+  output:{en:'Accepted \u2192 Area 19/18, Rejected \u2192 Shawarma line'},
+  time:'20 minutes', temp:'1\u00b0C',
+  notes:{en:'Controlled dosing system: chlorine, lemon, vinegar \u2014 per quality plan.'}
+});
+['Chlorine','Lemon','Vinegar'].forEach((chem,i)=>{
+  MACHINES.push({
+    id:'dosing_'+chem.toLowerCase(), area:'area78', type:'tank', x:-70+i*6, z:14, w:3.4, h:6, d:3.4,
+    color: [0x84cc16, 0xfacc15, 0xf3f4f6][i], pipeTo:{x:-62,z:0},
+    name:{en: chem+' Dosing Tank'},
+    func:{en:'Adds '+chem.toLowerCase()+' at controlled, approved rates into the Scan Midi rinse water'},
+    input:{en:'\u2014'}, output:{en:'Treated rinse water to Scan Midi'},
+    time:'Continuous', temp:'\u2014',
+    notes:{en:'Quantities depend on the operating plan and internal food-safety standards.'}
+  });
+});
+MACHINES.push({
+  id:'size_rejection', area:'area78', type:'sorter', x:-48, z:0, w:8, h:4, d:8,
+  color: COLORS.steel,
+  name:{en:'Size Rejection Point'},
+  func:{en:'Sorts pieces by size: green light = accepted, red light = rejected'},
+  input:{en:'Product from Scan Midi'},
+  output:{en:'Green \u2192 production lines, Red \u2192 mincing / Shawarma line'},
+  time:'Instant', temp:'\u2014',
+  notes:{en:'Quality control (QC) checkpoint.'}
+});
+
+/* Area 19 — main detailed line (Line 2) + 3 summarized parallel lines */
+const LINE19_STEPS = [
+  {id:'look_saw',   name:'Look Saw',                  func:'Initial cut to standardize chicken breast shape', io:['Raw chicken breasts','More uniform pieces'], blade:true},
+  {id:'trimmer',    name:'Trimmer',                   func:'Trims pieces and removes unwanted excess (worker-inspected)', io:['Cut pieces','Trimmed pieces']},
+  {id:'plank_saw',  name:'Plank Saw',                 func:'Additional cut to reach the required final shape', io:['Trimmed pieces','Shaped pieces'], blade:true},
+  {id:'multi_saw',  name:'Multi Saw',                 func:'Multi-blade cut producing several pieces simultaneously', io:['Shaped pieces','Multiple piece batches'], blade:true},
+  {id:'manual_inspection_19', name:'Manual Inspection', func:'Manual worker inspection sorting out non-conforming pieces', io:['Piece batches','Approved conforming pieces'], table:true},
+  {id:'apb_batter', name:'Batter Machine \u2014 APB', func:'Adds the liquid batter coating to the product', io:['Approved pieces','Batter-coated pieces'], hood:true},
+  {id:'e204_breading', name:'Breading Machine \u2014 E204', func:'Adds the breading layer after batter (Coating = Batter + Breading)', io:['Batter-coated pieces','Fully coated pieces'], hood:true},
+  {id:'auto_packing', name:'Auto Packing Line', func:'ISHIDA CCW Smart Packer \u2192 Takeaway Conveyor \u2192 DACS digital check-scale \u2192 table / carton sealers', io:['Coated product','Sealed finished packages'], panel:true},
+];
+LINE19_STEPS.forEach((s,i)=>{
+  MACHINES.push({
+    id:s.id, area:'area19', type:'machine', x:-20+i*10.5, z:0, w:7, h:5.5, d:6,
+    color: COLORS.steel, blade:s.blade, table:s.table, hood:s.hood, panel:s.panel,
+    name:{en:s.name}, func:{en:s.func},
+    input:{en:s.io[0]}, output:{en:s.io[1]},
+    time: s.id==='auto_packing' ? 'Variable' : '\u2014',
+    temp:'\u2014', notes:{en:'Main production Line 2 \u2014 chicken breasts (Area 19).'}
+  });
+});
+MACHINES.push({
+  id:'manual_packing_19', area:'area19', type:'machine', x:53.5, z:12, w:7, h:4, d:6,
+  color: COLORS.steel, table:true,
+  name:{en:'Manual Packing Table'},
+  func:{en:'Arranges, weighs and inspects product, then passes to carton sealing'},
+  input:{en:'Coated product'}, output:{en:'Packages ready for sealing'},
+  time:'Variable', temp:'\u2014', notes:{en:'Parallel manual route beside the auto packing line.'}
+});
+[
+  {key:'line1', z:-22, en:'Line 1 \u2014 Mesaheb Product'},
+  {key:'line3', z:-11, en:'Line 3 \u2014 Chicken Breast'},
+  {key:'line4', z:22,  en:'Line 4 \u2014 Chicken Breast'},
+].forEach(l=>{
+  MACHINES.push({
+    id:l.key, area:'area19', type:'conveyor', x:17, z:l.z, w:78, h:2.2, d:4.5,
+    color: COLORS.steelDark, name:{en:l.en},
+    func:{en:'Runs the same sequence as the main line (Look Saw \u2192 Trimmer \u2192 Plank Saw \u2192 Multi Saw \u2192 Manual Inspection \u2192 Batter \u2192 Breading \u2192 Packing).'},
+    input:{en:'Accepted product from Scan Midi'},
+    output:{en:'Packed finished product'},
+    time:'\u2014', temp:'\u2014', notes:{en:'Click the main line (center) stations for per-station detail.'}
+  });
+});
+
+/* Shawarma line */
+const SHAWARMA_STEPS = [
+  {id:'reject_transfer', name:'Rejected Chicken Transfer', func:'Transfers rejected pieces from Scan Midi to the Shawarma line', io:['Size/shape-rejected pieces','Pieces routed to Shawarma line']},
+  {id:'mincing',  name:'Mincing / Grinding', func:'Grinds rejected pieces into minced meat', io:['Rejected pieces','Minced meat'], hood:true},
+  {id:'shawarma_prep', name:'Shawarma Preparation', func:'Blends spices and prepares the Shawarma raw material', io:['Minced meat','Shawarma raw material'], hood:true},
+];
+SHAWARMA_STEPS.forEach((s,i)=>{
+  MACHINES.push({
+    id:s.id, area:'shawarma', type:'machine', x:-32+i*13, z:38, w:7, h:5, d:6,
+    color: 0xc98a4b, hood:s.hood,
+    name:{en:s.name}, func:{en:s.func},
+    input:{en:s.io[0]}, output:{en:s.io[1]},
+    time:'\u2014', temp:'\u2014', notes:{en:'Receives size/shape-rejected pieces from Area 7/8.'}
+  });
+});
+
+/* Area 18 — full detailed line + parallel line */
+const LINE18_STEPS = [
+  {id:'flattener',    name:'Flattener \u2014 TSM Conveyor', func:'Flattens and evens the product before battering', io:['Raw Strips / Shrimp / Boneless thighs','Flattened product']},
+  {id:'abp16_batter', name:'Batter Machine \u2014 ABP-16', func:'Adds the first batter coat', io:['Flattened product','First batter coat'], hood:true},
+  {id:'ppb4_breading',name:'Breading \u2014 PPB 4 (F-24)', func:'Adds the first breading layer via the F-24 conveyor', io:['Battered product','Breaded product'], hood:true},
+  {id:'suv_ba',       name:'SUV BA \u2014 Second Batter', func:'A second light liquid coating layer', io:['Breaded product','Second liquid coat'], hood:true},
+  {id:'super_flex',   name:'Super Flex \u2014 Second Breading', func:'Reinforces the outer coating layer', io:['Second coat','Reinforced outer coating'], hood:true},
+  {id:'fryer',        name:'Fryer', func:'Par-fries to set the batter and breading', io:['Fully coated product','Par-fried product'], fryer:true},
+  {id:'manual_inspection_18', name:'Inspection Before Cooling', func:'Visual check; isolates non-conforming product', io:['Fried product','Approved product for cooling'], table:true},
+  {id:'gcm_cooling',  name:'GCM Cooling Machine', func:'Rapid-chills the product after frying', io:['Warm fried product','Chilled product at -31\u00b0C'], gcm:true},
+  {id:'packaging_1kg',name:'Packaging 1 kg', func:'Packs chilled product into 1 kg packages', io:['Chilled product','1 kg packages'], panel:true},
+  {id:'saxon_sealer', name:'Saxon Sealer', func:'Seals the packages', io:['1 kg packages','Sealed packages']},
+  {id:'printer_2200', name:'2200 Printer', func:'Prints stickers, product and carton data', io:['Sealed packages','Printed cartons ready to ship'], panel:true},
+];
+LINE18_STEPS.forEach((s,i)=>{
+  const base = {
+    id:s.id, area:'area18', type:'machine', x:86+i*9, z:0, w:7, h:5.5, d:6,
+    color: COLORS.steel, hood:s.hood, table:s.table, panel:s.panel,
+    name:{en:s.name}, func:{en:s.func},
+    input:{en:s.io[0]}, output:{en:s.io[1]},
+    time:'\u2014', temp:'\u2014',
+    notes:{en:'Main Area 18 line \u2014 Strips / Shrimp / Boneless thighs.'}
+  };
+  if (s.fryer){
+    base.type='fryer'; base.color=0xf97316; base.h=6;
+    base.notes={en:'Fryer oil capacity 102 gal, tank 84 gal, with an external filter that draws, cleans and returns the oil.'};
+  }
+  if (s.gcm){
+    base.type='gcm'; base.color=COLORS.cool; base.h=9; base.w=9;
+    base.temp='-31\u00b0C'; base.time='40 minutes';
+    base.notes={en:'Cooling duration 40 minutes with cold-mist effect.'};
+  }
+  MACHINES.push(base);
+});
+// External oil filter beside fryer
+MACHINES.push({
+  id:'oil_filter', area:'area18', type:'tank', x:131, z:13, w:4, h:5, d:4,
+  color: 0xfb923c, pipeTo:{x:131,z:0},
+  name:{en:'External Oil Filter'},
+  func:{en:'Draws oil from the fryer, cleans it, and returns it'},
+  input:{en:'Used fryer oil'}, output:{en:'Filtered oil back to fryer'},
+  time:'Continuous', temp:'\u2014',
+  notes:{en:'Fryer oil capacity 102 gal \u2014 oil tank capacity 84 gal.'}
+});
+MACHINES.push({
+  id:'area18_lineB', area:'area18', type:'conveyor', x:131, z:-22, w:92, h:2.2, d:4.5,
+  color: COLORS.steelDark, name:{en:'Line 18-B (Parallel)'},
+  func:{en:'Runs the same sequence as the main Area 18 line'},
+  input:{en:'Strips / Shrimp / Boneless thighs'},
+  output:{en:'Printed 1 kg packages'},
+  time:'\u2014', temp:'\u2014', notes:{en:'Click the main line stations for detail.'}
+});
+
+/* Dispatch */
+MACHINES.push({
+  id:'dispatch', area:'packaging', type:'room', x:196, z:0, w:20, h:10, d:26,
+  color: COLORS.pack,
+  name:{en:'Dispatch / Finished Goods'},
+  func:{en:'Staging of printed cartons before cold-chain shipping'},
+  input:{en:'Printed cartons from Area 18 / 19'},
+  output:{en:'Shipped product'},
+  time:'\u2014', temp:'\u2014', notes:{en:'End of the production flow.'}
+});
+
+/* ---------- QC markers ---------- */
+const QC_POINTS = [
+  {id:'qc_temp_frozen', x:-150, z:18,  en:'Temperature Check \u2014 Frozen'},
+  {id:'qc_defrost',     x:-105, z:-28, en:'Defrosting Check'},
+  {id:'qc_size',        x:-48,  z:-8,  en:'Size Check'},
+  {id:'qc_weight',      x:48,   z:-6,  en:'Weight Check (DACS)'},
+  {id:'qc_pack',        x:150,  z:8,   en:'Packaging Check'},
+];
+
+/* ---------- Workers ---------- */
+const WORKERS = [
+  {x:-146,z:8,  role:'general'}, {x:-105,z:-26, role:'general'},
+  {x:-62, z:-8, role:'general'}, {x:22,  z:6,   role:'inspect'},
+  {x:149, z:6,  role:'inspect'}, {x:53,  z:18,  role:'pack'},
+  {x:-24, z:34, role:'general'},
+  {x:-62, z:12, role:'maint', maintOnly:true},
+  {x:10,  z:-16,role:'maint', maintOnly:true},
+  {x:110, z:-8, role:'clean', maintOnly:true},
+  {x:167, z:8,  role:'clean', maintOnly:true},
+];
+
+/* ---------- Tour ---------- */
+const TOUR = [
+  {area:'frozen',   desc:{en:'We start at Frozen Storage at -16\u00b0C, where product arrives per the daily production plan.'}},
+  {area:'defrost',  desc:{en:'Product moves to 6 defrosting rooms until it reaches 1\u00b0C.'}},
+  {area:'area78',   desc:{en:'In Area 7/8, product passes through Rinsing Scan Midi (20 min) with controlled chlorine / lemon / vinegar dosing, then size sorting.'}},
+  {area:'shawarma', desc:{en:'Rejected pieces are diverted to the Shawarma line: transfer, mincing, then spice preparation.'}},
+  {area:'area19',   desc:{en:'Area 19 has 5 chicken-breast lines: cutting, manual inspection, batter + breading (coating), then auto or manual packing.'}},
+  {area:'area18',   desc:{en:'Area 18 handles Strips, Shrimp and boneless thighs: flattening, double batter/breading, frying, GCM cooling at -31\u00b0C, then 1 kg packing, sealing and printing.'}},
+  {area:'packaging',desc:{en:'Printed cartons stage at Dispatch, ready for cold-chain shipping.'}},
+];
+
+/* ============================================================
+   THREE.JS
+   ============================================================ */
+let scene, camera, renderer, raycaster, mouse;
+let clickable = [];
+let particleGroups = [];
+let labelSprites = [];
+let dirLight, ambLight, hemiLight;
+let cameraTarget = new THREE.Vector3(20,0,0);
+let cameraSpherical = { radius: 330, theta: 0.7, phi: 1.0 };
+let dragging = false, lastX=0, lastY=0;
+let animTarget = null;
+let clock;
+const areaGroups = {};   // key -> THREE.Group (all meshes of that area)
+
+function initScene(){
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060a12);
+  scene.fog = new THREE.Fog(0x060a12, 300, 900);
+
+  camera = new THREE.PerspectiveCamera(48, window.innerWidth/window.innerHeight, 0.5, 4000);
+  updateCameraFromSpherical();
+
+  try{
+    renderer = new THREE.WebGLRenderer({
+      antialias: !STATE.mobile,
+      powerPreference: 'default',
+      failIfMajorPerformanceCaveat: false,
+      alpha: false
+    });
+  } catch(err){
+    try{ renderer = new THREE.WebGLRenderer({antialias:false}); }
+    catch(err2){
+      showFatalError('Your device/browser could not start 3D (WebGL). Try a different browser or device.');
+      throw err2;
+    }
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, STATE.mobile?1.5:2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = !STATE.mobile;
+  document.getElementById('canvas-wrap').appendChild(renderer.domElement);
+
+  hemiLight = new THREE.HemisphereLight(0x8fb3ff, 0x0a0e16, 0.6);
+  scene.add(hemiLight);
+  ambLight = new THREE.AmbientLight(0xffffff, 0.35);
+  scene.add(ambLight);
+  dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+  dirLight.position.set(120,180,80);
+  dirLight.castShadow = !STATE.mobile;
+  if (dirLight.castShadow){
+    dirLight.shadow.mapSize.set(1024,1024);
+    dirLight.shadow.camera.left=-320; dirLight.shadow.camera.right=320;
+    dirLight.shadow.camera.top=220; dirLight.shadow.camera.bottom=-220;
+  }
+  scene.add(dirLight);
+
+  AREAS.forEach(a=>{ areaGroups[a.key] = new THREE.Group(); scene.add(areaGroups[a.key]); });
+
+  buildFloor();
+  buildDividers();
+  buildMachines();
+  buildTrunkConveyors();
+  buildQCMarkers();
+  buildWorkers();
+  buildFlowTrains();
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+  clock = new THREE.Clock();
+
+  window.addEventListener('resize', onResize);
+  const dom = renderer.domElement;
+  dom.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+  dom.addEventListener('wheel', onWheel, {passive:false});
+  dom.addEventListener('click', onClickPick);
+  dom.addEventListener('touchend', onTouchTap, {passive:true});
+
+  animate();
+}
+
+function updateCameraFromSpherical(){
+  const s = cameraSpherical;
+  const x = cameraTarget.x + s.radius * Math.sin(s.phi) * Math.sin(s.theta);
+  const y = cameraTarget.y + s.radius * Math.cos(s.phi);
+  const z = cameraTarget.z + s.radius * Math.sin(s.phi) * Math.cos(s.theta);
+  camera.position.set(x,y,z);
+  camera.lookAt(cameraTarget);
+}
+
+function onResize(){
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  STATE.mobile = window.innerWidth < 860;
+  document.body.classList.toggle('is-mobile', STATE.mobile);
+}
+function onPointerDown(e){ dragging=true; lastX=e.clientX; lastY=e.clientY; }
+function onPointerMove(e){
+  if(!dragging) return;
+  const dx = e.clientX-lastX, dy = e.clientY-lastY;
+  lastX=e.clientX; lastY=e.clientY;
+  cameraSpherical.theta -= dx*0.006;
+  cameraSpherical.phi = Math.min(Math.max(cameraSpherical.phi - dy*0.006, 0.25), 1.5);
+  updateCameraFromSpherical();
+}
+function onPointerUp(){ dragging=false; }
+function onWheel(e){
+  e.preventDefault();
+  cameraSpherical.radius = Math.min(Math.max(cameraSpherical.radius + e.deltaY*0.3, 40), 800);
+  updateCameraFromSpherical();
+}
+function onClickPick(e){
+  if (Math.abs(e.clientX-lastX)>4) return;
+  pickAt(e.clientX, e.clientY);
+}
+function onTouchTap(e){
+  if(!e.changedTouches || !e.changedTouches[0]) return;
+  pickAt(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+}
+function pickAt(cx,cy){
+  mouse.x = (cx/window.innerWidth)*2-1;
+  mouse.y = -(cy/window.innerHeight)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(clickable, true);
+  for (const h of hits){
+    let o = h.object;
+    while (o && !o.userData.machine) o = o.parent;
+    if (o && o.userData.machine && !o.userData.machine.decor){
+      openMachineInfo(o.userData.machine);
+      return;
+    }
+  }
+}
+
+/* ---------- Floor, zones & dividers ---------- */
+function buildFloor(){
+  const floorGeo = new THREE.PlaneGeometry(440, 130);
+  const floorMat = new THREE.MeshStandardMaterial({color:COLORS.floor, roughness:0.95, metalness:0.05});
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI/2;
+  floor.position.set(30,-0.05,0);
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  const grid = new THREE.GridHelper(440, 88, 0x1c2940, 0x121a2a);
+  grid.position.set(30,0,0);
+  scene.add(grid);
+
+  AREAS.forEach(a=>{
+    const g = areaGroups[a.key];
+    // tinted zone floor
+    const zone = new THREE.Mesh(
+      new THREE.PlaneGeometry(a.w, a.d),
+      new THREE.MeshBasicMaterial({color:0x1b2a44, transparent:true, opacity:0.22})
+    );
+    zone.rotation.x=-Math.PI/2;
+    zone.position.set(a.x, 0.02, a.z);
+    g.add(zone);
+    // zone outline
+    const edge = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.PlaneGeometry(a.w, a.d)),
+      new THREE.LineBasicMaterial({color:0x3b5a8c})
+    );
+    edge.rotation.x=-Math.PI/2;
+    edge.position.set(a.x, 0.04, a.z);
+    g.add(edge);
+    // big section label
+    const label = makeLabel(a.en+'  \u00b7  '+a.sub, {scale:9, bg:'rgba(10,16,28,0.8)'});
+    label.position.set(a.x, 22, a.z - a.d/2 + 2);
+    g.add(label);
+  });
+}
+
+function buildDividers(){
+  DIVIDERS.forEach(d=>{
+    const wallMat = new THREE.MeshStandardMaterial({color:COLORS.wall, roughness:0.85, metalness:0.15});
+    // two wall segments with a gate opening in the middle (gate width 12)
+    const segLen = (64-12)/2;
+    [-1,1].forEach(side=>{
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(1.2, 12, segLen), wallMat);
+      wall.position.set(d.x, 6, d.gateZ + side*(6+segLen/2));
+      wall.castShadow = !STATE.mobile;
+      scene.add(wall);
+    });
+    // gate frame
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(1.6, 1.2, 13),
+      new THREE.MeshStandardMaterial({color:0xf5c451, metalness:0.4, roughness:0.5})
+    );
+    frame.position.set(d.x, 11.4, d.gateZ);
+    scene.add(frame);
+  });
+}
+
+/* ---------- Label sprite ---------- */
+function makeLabel(text,opts={}){
+  const scale = opts.scale || 3.4;
+  const canvas = document.createElement('canvas');
+  canvas.width = 640; canvas.height = 108;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = opts.bg || 'rgba(10,16,28,0.82)';
+  roundRect(ctx,4,4,632,100,16); ctx.fill();
+  ctx.strokeStyle = 'rgba(147,197,253,0.55)'; ctx.lineWidth=2;
+  roundRect(ctx,4,4,632,100,16); ctx.stroke();
+  ctx.textAlign='center';
+  ctx.fillStyle = '#e8f0fb';
+  ctx.font = '600 36px Rajdhani, Arial, sans-serif';
+  ctx.fillText(text, 320, 66);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({map:tex, transparent:true, depthTest:true});
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(scale, scale*108/640, 1);
+  labelSprites.push(sprite);
+  return sprite;
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+/* ---------- Composite machine builder ---------- */
+function stdMat(color, opts={}){
+  return new THREE.MeshStandardMaterial(Object.assign({color, metalness:0.55, roughness:0.38}, opts));
+}
+function buildMachineGroup(m){
+  const g = new THREE.Group();
+  const bodyH = m.h*0.62;
+  const legH = m.h*0.28;
+
+  if (m.type==='room'){
+    const geo = new THREE.BoxGeometry(m.w,m.h,m.d);
+    const body = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color:m.color, transparent:true, opacity:0.26, metalness:0.2, roughness:0.6}));
+    body.position.y = m.h/2;
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({color:0x9db8e8}));
+    edges.position.y = m.h/2;
+    g.add(body, edges);
+    // door
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.4, m.h*0.55, m.d*0.28), stdMat(0x64748b));
+    door.position.set(m.w/2, m.h*0.3, 0);
+    g.add(door);
+  }
+  else if (m.type==='pallet'){
+    for (let i=0;i<3;i++){
+      const box = new THREE.Mesh(new THREE.BoxGeometry(m.w, m.h/3-0.15, m.d), stdMat(0xd9c7a8,{metalness:0.05,roughness:0.9}));
+      box.position.y = (m.h/3)*i + m.h/6;
+      g.add(box);
+    }
+    const base = new THREE.Mesh(new THREE.BoxGeometry(m.w+0.6, 0.4, m.d+0.6), stdMat(0x8b5e3c,{metalness:0.05,roughness:0.95}));
+    base.position.y = 0.2;
+    g.add(base);
+  }
+  else if (m.type==='tank'){
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(m.w/2, m.w/2, m.h*0.8, 18), stdMat(m.color));
+    body.position.y = legH + m.h*0.4;
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(m.w/2, 18, 10, 0, Math.PI*2, 0, Math.PI/2), stdMat(m.color));
+    cap.position.y = legH + m.h*0.8;
+    g.add(body, cap);
+    addLegs(g, m.w*0.8, m.d*0.8, legH, 4);
+    if (m.pipeTo){
+      const dx = m.pipeTo.x - m.x, dz = m.pipeTo.z - m.z;
+      const len = Math.sqrt(dx*dx+dz*dz);
+      const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,len,8), stdMat(0x94a3b8));
+      pipe.position.set(dx/2, 1.4, dz/2);
+      pipe.rotation.z = Math.PI/2;
+      pipe.rotation.y = -Math.atan2(dz,dx);
+      g.add(pipe);
+    }
+  }
+  else if (m.type==='sorter'){
+    // Y-shaped sorter: body + two diverging chutes + status lamps
+    const body = new THREE.Mesh(new THREE.BoxGeometry(m.w*0.5, 2.5, m.d*0.5), stdMat(m.color));
+    body.position.y = legH + 1.25;
+    g.add(body);
+    addLegs(g, m.w*0.45, m.d*0.45, legH, 4);
+    const chuteG = new THREE.Mesh(new THREE.BoxGeometry(m.w*0.7, 0.5, 1.8), stdMat(COLORS.accept,{emissive:COLORS.accept, emissiveIntensity:0.35}));
+    chuteG.position.set(m.w*0.45, legH+1.4, -1.6);
+    chuteG.rotation.y = 0.25;
+    const chuteR = new THREE.Mesh(new THREE.BoxGeometry(m.w*0.7, 0.5, 1.8), stdMat(COLORS.reject,{emissive:COLORS.reject, emissiveIntensity:0.35}));
+    chuteR.position.set(m.w*0.45, legH+1.4, 1.6);
+    chuteR.rotation.y = -0.25;
+    g.add(chuteG, chuteR);
+    addLamp(g, 0, legH+3.6, -1.2, COLORS.accept);
+    addLamp(g, 0, legH+3.6, 1.2, COLORS.reject);
+  }
+  else if (m.type==='conveyor'){
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(m.w, 0.6, m.d), stdMat(m.color,{metalness:0.3,roughness:0.7}));
+    frame.position.y = 2;
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(m.w-0.6, 0.25, m.d-1.2), stdMat(0x1f2937,{metalness:0.1,roughness:0.9}));
+    belt.position.y = 2.42;
+    g.add(frame, belt);
+    // support legs every ~12 units
+    const n = Math.max(2, Math.floor(m.w/12));
+    for (let i=0;i<=n;i++){
+      const lx = -m.w/2 + (m.w/n)*i;
+      [-1,1].forEach(s=>{
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,2,8), stdMat(0x475569));
+        leg.position.set(lx, 1, s*(m.d/2-0.5));
+        g.add(leg);
+      });
+    }
+  }
+  else if (m.type==='fryer'){
+    const body = new THREE.Mesh(new THREE.BoxGeometry(m.w, bodyH, m.d), stdMat(m.color,{metalness:0.4}));
+    body.position.y = legH + bodyH/2;
+    g.add(body);
+    addLegs(g, m.w*0.9, m.d*0.9, legH, 4);
+    // exhaust hood + stack
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(m.w*0.9, 1, m.d*0.9), stdMat(0x9ca3af));
+    hood.position.y = legH + bodyH + 1.6;
+    const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,3,10), stdMat(0x9ca3af));
+    stack.position.y = legH + bodyH + 3.6;
+    g.add(hood, stack);
+    // steam sprites
+    for (let i=0;i<3;i++){
+      const steam = new THREE.Mesh(new THREE.SphereGeometry(0.7+i*0.3, 8, 8), new THREE.MeshBasicMaterial({color:0xe5e7eb, transparent:true, opacity:0.28-i*0.07}));
+      steam.position.set(0, legH+bodyH+4.5+i*1.2, 0);
+      steam.userData.steam = {base: steam.position.y, phase: i};
+      g.add(steam);
+    }
+  }
+  else if (m.type==='gcm'){
+    const body = new THREE.Mesh(new THREE.BoxGeometry(m.w, bodyH+2, m.d), stdMat(m.color,{metalness:0.5}));
+    body.position.y = legH + (bodyH+2)/2;
+    g.add(body);
+    addLegs(g, m.w*0.9, m.d*0.9, legH, 6);
+    // frost mist
+    for (let i=0;i<3;i++){
+      const mist = new THREE.Mesh(new THREE.SphereGeometry(1+i*0.4, 8, 8), new THREE.MeshBasicMaterial({color:0xbae6fd, transparent:true, opacity:0.22-i*0.05}));
+      mist.position.set((i-1)*1.6, legH+1.2, m.d/2+0.8);
+      mist.userData.steam = {base: mist.position.y, phase: i+2};
+      g.add(mist);
+    }
+    // side panel with temp readout look
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.6, 2.2), stdMat(0x0f172a,{emissive:0x38bdf8, emissiveIntensity:0.35}));
+    panel.position.set(m.w/2+0.2, legH+3, 0);
+    g.add(panel);
+  }
+  else { // generic 'machine'
+    const body = new THREE.Mesh(new THREE.BoxGeometry(m.w, bodyH, m.d), stdMat(m.color));
+    body.position.y = legH + bodyH/2;
+    g.add(body);
+    addLegs(g, m.w*0.9, m.d*0.9, legH, 4);
+    // infeed/outfeed rollers
+    [-1,1].forEach(s=>{
+      const roller = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,m.d*0.85,10), stdMat(0x64748b));
+      roller.rotation.x = Math.PI/2;
+      roller.position.set(s*(m.w/2+0.5), legH+bodyH*0.35, 0);
+      g.add(roller);
+    });
+    if (m.blade){
+      const bladeHousing = new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,0.5,16), stdMat(0xd1d5db,{metalness:0.85, roughness:0.2}));
+      bladeHousing.rotation.z = Math.PI/2;
+      bladeHousing.position.set(0, legH+bodyH+0.8, 0);
+      g.add(bladeHousing);
+    }
+    if (m.hood){
+      const hood = new THREE.Mesh(new THREE.BoxGeometry(m.w*0.85, 1.4, m.d*0.85), stdMat(0x9ca3af));
+      hood.position.y = legH + bodyH + 0.9;
+      const neck = new THREE.Mesh(new THREE.BoxGeometry(m.w*0.4, 0.8, m.d*0.4), stdMat(0x9ca3af));
+      neck.position.y = legH + bodyH + 0.2;
+      g.add(hood, neck);
+    }
+    if (m.table){
+      // low inspection table look: thinner body + overhead light bar
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(m.w*0.9, 0.25, 0.8), stdMat(0xfef9c3,{emissive:0xfef08a, emissiveIntensity:0.6}));
+      bar.position.y = legH + bodyH + 2.2;
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,2.2,8), stdMat(0x475569));
+      post.position.set(-m.w/2+0.4, legH+bodyH+1.1, 0);
+      g.add(bar, post);
+    }
+    if (m.panel){
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.8, 1.4), stdMat(0x0f172a,{emissive:0x60a5fa, emissiveIntensity:0.4}));
+      panel.position.set(m.w/2+0.25, legH+bodyH*0.7, m.d/2-0.4);
+      g.add(panel);
+    }
+    // status lamp
+    addLamp(g, -m.w/2+0.5, legH+bodyH+1.2, m.d/2-0.5, COLORS.accept, true);
+  }
+  return g;
+}
+function addLegs(g, spanX, spanZ, legH, count){
+  const pos = count===6
+    ? [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1]]
+    : [[-1,-1],[1,-1],[-1,1],[1,1]];
+  pos.forEach(p=>{
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.28,legH,8), stdMat(0x475569));
+    leg.position.set(p[0]*spanX/2, legH/2, p[1]*spanZ/2);
+    g.add(leg);
+  });
+}
+const statusLamps = [];
+function addLamp(g, x,y,z, color, isStatus){
+  const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 10), new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:0.9}));
+  lamp.position.set(x,y,z);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,1,6), stdMat(0x475569));
+  pole.position.set(x, y-0.6, z);
+  g.add(lamp, pole);
+  if (isStatus) statusLamps.push(lamp);
+}
+
+function buildMachines(){
+  MACHINES.forEach(m=>{
+    const group = buildMachineGroup(m);
+    group.position.set(m.x, 0, m.z);
+    group.traverse(o=>{
+      if (o.isMesh){ o.castShadow = !STATE.mobile; o.receiveShadow = !STATE.mobile; }
+    });
+    group.userData.machine = m;
+    (areaGroups[m.area] || scene).add(group);
+    clickable.push(group);
+    m.group = group;
+
+    if (m.type!=='conveyor' && !m.decor){
+      const lbl = makeLabel(m.name.en, {scale:5});
+      lbl.position.set(m.x, (m.h||4)+4.4, m.z);
+      (areaGroups[m.area] || scene).add(lbl);
+      m.labelSprite = lbl;
+    }
+  });
+}
+
+/* Trunk conveyors connecting the sections through the gates */
+function buildTrunkConveyors(){
+  const runs = [
+    {x1:-137, x2:-111, z:0},   // frozen -> defrost
+    {x1:-99,  x2:-70,  z:0},   // defrost -> scan midi
+    {x1:-54,  x2:-24,  z:0},   // scan midi/sorter -> area19
+    {x1:60,   x2:86,   z:0},   // area19 -> area18 (accepted for A18 products routing)
+    {x1:176,  x2:188,  z:0},   // printer -> dispatch
+  ];
+  runs.forEach(r=>{
+    const w = r.x2-r.x1;
+    const m = {type:'conveyor', color:COLORS.steelDark, w, d:4, h:2};
+    const g = buildMachineGroup(m);
+    g.position.set(r.x1+w/2, 0, r.z);
+    scene.add(g);
+  });
+  // reject spur toward shawarma
+  const spur = buildMachineGroup({type:'conveyor', color:COLORS.steelDark, w:4, d:30, h:2});
+  spur.position.set(-46, 0, 20);
+  scene.add(spur);
+}
+
+/* ---------- QC markers ---------- */
+function buildQCMarkers(){
+  QC_POINTS.forEach(q=>{
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(2.2,3,28),
+      new THREE.MeshBasicMaterial({color:0xf5c451, side:THREE.DoubleSide})
+    );
+    ring.rotation.x=-Math.PI/2;
+    ring.position.set(q.x,0.06,q.z);
+    ring.userData.machine = {id:q.id, name:{en:q.en},
+      func:{en:'Quality control (QC) checkpoint.'},
+      input:{en:'\u2014'}, output:{en:'\u2014'}, time:'\u2014', temp:'\u2014',
+      notes:{en:'Part of the quality-monitoring system along the line.'}};
+    scene.add(ring);
+    clickable.push(ring);
+  });
+}
+
+/* ---------- Workers ---------- */
+function buildWorkers(){
+  WORKERS.forEach(w=>{
+    const g = new THREE.Group();
+    const bodyColor = w.role==='maint' ? 0xf59e0b : w.role==='clean' ? 0x38bdf8 : 0xf1f5f9;
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.9,1.1,3.2,10), new THREE.MeshStandardMaterial({color:bodyColor, roughness:0.8}));
+    body.position.y=2.2;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.75,12,12), new THREE.MeshStandardMaterial({color:0xd8b48a}));
+    head.position.y=4.2;
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.8,12,8,0,Math.PI*2,0,Math.PI/2), new THREE.MeshStandardMaterial({color:0xffffff}));
+    cap.position.y=4.5;
+    g.add(body,head,cap);
+    g.position.set(w.x, 0, w.z);
+    g.userData.maintOnly = !!w.maintOnly;
+    g.visible = !w.maintOnly;
+    scene.add(g);
+    w.group = g;
+  });
+}
+
+/* ---------- Product flow tokens ---------- */
+function buildFlowTrains(){
+  const path19 = [
+    {p:[-150,3.2,0], c:COLORS.frozen},
+    {p:[-105,3.2,0], c:COLORS.defrost},
+    {p:[-62,3.2,0],  c:COLORS.defrost},
+    {p:[-48,3.2,0],  c:COLORS.accept},
+    {p:[-20,3.2,0],  c:COLORS.accept},
+    {p:[22,3.2,0],   c:COLORS.accept},
+    {p:[43,3.2,0],   c:COLORS.accept},
+    {p:[53.5,3.2,0], c:COLORS.pack},
+    {p:[196,3.2,0],  c:COLORS.pack},
+  ];
+  const path18 = [
+    {p:[-150,3.2,6], c:COLORS.frozen},
+    {p:[-62,3.2,6],  c:COLORS.defrost},
+    {p:[-48,3.2,3],  c:COLORS.accept},
+    {p:[86,3.2,0],   c:COLORS.accept},
+    {p:[122,3.2,0],  c:COLORS.accept},
+    {p:[149,3.2,0],  c:COLORS.cool},
+    {p:[176,3.2,0],  c:COLORS.pack},
+    {p:[196,3.2,3],  c:COLORS.pack},
+  ];
+  const pathReject = [
+    {p:[-48,3.2,0],  c:COLORS.reject},
+    {p:[-46,3.2,20], c:COLORS.reject},
+    {p:[-32,3.2,38], c:COLORS.reject},
+    {p:[-6,3.2,38],  c:0xc98a4b},
+  ];
+  particleGroups.push(makeTrain(path19, 6, 0.0045));
+  particleGroups.push(makeTrain(path18, 5, 0.004));
+  particleGroups.push(makeTrain(pathReject, 2, 0.009));
+}
+function makeTrain(path, count, speed){
+  const pts = path.map(pp=>new THREE.Vector3(pp.p[0],pp.p[1],pp.p[2]));
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const tokens = [];
+  for(let i=0;i<count;i++){
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(1.2,10,10),
+      new THREE.MeshStandardMaterial({color:path[0].c, emissive:path[0].c, emissiveIntensity:0.5})
+    );
+    mesh.userData.t = i/count;
+    scene.add(mesh);
+    tokens.push(mesh);
+  }
+  return {curve, path, tokens, speed};
+}
+function colorForT(path, t){
+  const idx = Math.min(Math.floor(t*(path.length-1)), path.length-2);
+  return path[idx+1] ? path[idx+1].c : path[path.length-1].c;
+}
+
+/* ---------- Animate ---------- */
+let _steamT = 0;
+function animate(){
+  requestAnimationFrame(animate);
+  try{
+    const dt = clock.getDelta();
+    _steamT += dt;
+    const running = !STATE.maintenance;
+    if (running){
+      particleGroups.forEach(g=>{
+        g.tokens.forEach(tok=>{
+          tok.userData.t += g.speed;
+          if (tok.userData.t>1) tok.userData.t -= 1;
+          tok.position.copy(g.curve.getPointAt(tok.userData.t));
+          const c = colorForT(g.path, tok.userData.t);
+          tok.material.color.setHex(c);
+          tok.material.emissive.setHex(c);
+        });
+      });
+    }
+    // steam / mist bob
+    scene.traverse(o=>{
+      if (o.userData && o.userData.steam){
+        o.position.y = o.userData.steam.base + Math.sin(_steamT*1.5 + o.userData.steam.phase)*0.5;
+        o.visible = running;
+      }
+    });
+    // status lamps: green when running, amber in maintenance
+    statusLamps.forEach(l=>{
+      const c = running ? COLORS.accept : 0xf59e0b;
+      l.material.color.setHex(c);
+      l.material.emissive.setHex(c);
+    });
+
+    labelSprites.forEach(s=>s.quaternion.copy(camera.quaternion));
+
+    if (animTarget){
+      animTarget.t += dt/animTarget.dur;
+      const t = Math.min(animTarget.t,1);
+      const ease = t<0.5 ? 2*t*t : -1+(4-2*t)*t;
+      cameraTarget.lerpVectors(animTarget.fromTarget, animTarget.toTarget, ease);
+      cameraSpherical.radius = animTarget.fromRadius + (animTarget.toRadius-animTarget.fromRadius)*ease;
+      updateCameraFromSpherical();
+      if (t>=1) animTarget=null;
+    }
+
+    renderer.render(scene, camera);
+  } catch(err){
+    console.warn('[App] frame error:', err);
+  }
+}
+
+/* ---------- Camera & section focus ---------- */
+function flyTo(x,z,radius=160){
+  animTarget = {
+    fromTarget: cameraTarget.clone(),
+    toTarget: new THREE.Vector3(x,0,z),
+    fromRadius: cameraSpherical.radius,
+    toRadius: radius,
+    t:0, dur:1.1
+  };
+}
+function goHome(){ setFocusArea(null); flyTo(25,0,380); }
+function goTop(){
+  setFocusArea(null);
+  animTarget = {
+    fromTarget: cameraTarget.clone(), toTarget:new THREE.Vector3(25,0,0),
+    fromRadius: cameraSpherical.radius, toRadius:340, t:0, dur:1
+  };
+  cameraSpherical.phi = 0.25;
+}
+
+/* Dim every other section when focusing one */
+function setFocusArea(key){
+  STATE.focusedArea = key;
+  Object.keys(areaGroups).forEach(k=>{
+    const dim = key && k!==key;
+    areaGroups[k].traverse(o=>{
+      if (o.isMesh || o.isSprite || o.isLineSegments){
+        if (o.material){
+          o.material.transparent = true;
+          const base = o.userData._baseOpacity !== undefined
+            ? o.userData._baseOpacity
+            : (o.userData._baseOpacity = (o.material.opacity!==undefined ? o.material.opacity : 1));
+          o.material.opacity = dim ? base*0.12 : base;
+        }
+      }
+    });
+  });
+}
+
+/* ---------- Phase handling (daily + weekly maintenance) ---------- */
+function applyPhase(key){
+  STATE.phase = key;
+  STATE.maintenance = MAINT_PHASES.includes(key);
+  const isMaint = STATE.maintenance;
+  document.body.classList.toggle('maint-mode', isMaint);
+  document.body.classList.toggle('weekly-mode', key==='weekly');
+  dirLight.color.setHex(isMaint ? 0x4b6fb0 : 0xffffff);
+  dirLight.intensity = isMaint ? 0.35 : 0.9;
+  ambLight.intensity = isMaint ? 0.55 : 0.35;
+  scene.fog.color.setHex(isMaint ? 0x0a1120 : 0x060a12);
+  scene.background.setHex(isMaint ? 0x0a1120 : 0x060a12);
+  WORKERS.forEach(w=>{
+    if (w.maintOnly) w.group.visible = isMaint;
+    else w.group.visible = !isMaint;
+  });
+  renderShiftBar();
+  renderDashboard();
+}
+
+/* ---------- Dashboard simulation ---------- */
+setInterval(()=>{
+  try{
+    if (STATE.maintenance) return;
+    STATE.accepted += Math.floor(Math.random()*6)+2;
+    if (Math.random()<0.28) STATE.rejected += 1;
+    if (Math.random()<0.15) STATE.shawarma += 1;
+    STATE.packages = Math.floor(STATE.accepted*0.92);
+    STATE.cartons = Math.floor(STATE.packages/24);
+    if (typeof renderDashboard === 'function') renderDashboard();
+  } catch(err){
+    console.warn('[App] dashboard sim error:', err);
+  }
+}, 2200);
+
+</script>
+<script>
+/* ============================================================
+   UI LAYER (English)
+   ============================================================ */
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+function setText(sel, val){ const el = $(sel); if (el) el.textContent = val; }
+
+/* Wrap any handler so one failure never breaks the rest of the UI */
+function safe(fn){
+  return function(...args){
+    try { return fn.apply(this, args); }
+    catch(err){ console.warn('[App] UI error:', err); }
+  };
+}
+
+/* ---------- Machine info modal ---------- */
+function openMachineInfo(m){
+  STATE.selectedMachine = m;
+  const panel = $('#machine-panel');
+  if (!panel) return;
+  panel.classList.add('open');
+  setText('#mp-name', m.name.en);
+  setText('#mp-func', m.func.en);
+  setText('#mp-input', m.input.en);
+  setText('#mp-output', m.output.en);
+  setText('#mp-time', m.time);
+  setText('#mp-temp', m.temp);
+  setText('#mp-status', STATE.maintenance ? 'Maintenance' : 'Running');
+  setText('#mp-notes', m.notes.en);
+}
+function closeMachinePanel(){
+  const p = $('#machine-panel');
+  if (p) p.classList.remove('open');
+  STATE.selectedMachine = null;
+}
+
+/* ---------- Shift bar ---------- */
+function renderShiftBar(){
+  $all('.shift-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.phase === STATE.phase);
+  });
+  if (typeof syncMaintButtons === 'function') syncMaintButtons();
+  const now = new Date();
+  const hour = now.getHours() + now.getMinutes()/60;
+  const pct = Math.min(Math.max(hour/24,0),1)*100;
+  const ind = $('#shift-now-indicator');
+  if (ind) ind.style.left = pct+'%';
+}
+
+/* ---------- Dashboard ---------- */
+function renderDashboard(){
+  setText('#db-product', STATE.product==='chicken' ? 'Chicken' : STATE.product==='fish' ? 'Fish' : 'Other');
+  setText('#db-accepted', STATE.accepted);
+  setText('#db-rejected', STATE.rejected);
+  setText('#db-shawarma', STATE.shawarma);
+  setText('#db-packages', STATE.packages);
+  setText('#db-cartons', STATE.cartons);
+  setText('#db-frozen-temp', '-16°C');
+  setText('#db-scanmidi-temp', '1°C');
+  setText('#db-dosing', 'Chlorine / Lemon / Vinegar — Active');
+  setText('#db-state', STATE.maintenance ? (STATE.phase==='weekly' ? 'Stopped \u2014 Weekly PM' : 'Stopped \u2014 Daily PM') : 'Running');
+  setText('#db-maint-time', '01:00 \u2013 05:00');
+  setText('#db-weekly-time', 'Friday 02:00 \u2013 11:00');
+  const phase = SHIFT_PHASES.find(p=>p.key===STATE.phase);
+  if (phase) setText('#db-phase', phase.en);
+  for (let i=1;i<=6;i++){
+    const el = document.getElementById('db-room-'+i);
+    if (el) el.textContent = STATE.maintenance ? '—' : (Math.random()<0.5 ? 'Defrosting' : 'Ready');
+  }
+}
+
+/* ---------- Maintenance toggles (daily + weekly Friday) ---------- */
+function toggleMaintenance(){
+  applyPhase(STATE.phase==='maintenance' ? 'shift1' : 'maintenance');
+  syncMaintButtons();
+}
+function toggleWeekly(){
+  applyPhase(STATE.phase==='weekly' ? 'shift1' : 'weekly');
+  syncMaintButtons();
+}
+function syncMaintButtons(){
+  const mb = $('#maint-btn');
+  const wb = $('#weekly-btn');
+  if (mb) mb.classList.toggle('active', STATE.phase==='maintenance');
+  if (wb) wb.classList.toggle('active', STATE.phase==='weekly');
+}
+
+/* ---------- Panels open/close ---------- */
+function toggleDashboard(forceOpen){
+  const p = $('#dashboard-panel');
+  if (!p) return;
+  const open = forceOpen!==undefined ? forceOpen : !p.classList.contains('open');
+  p.classList.toggle('open', open);
+  if (open) closeMachinePanel();
+}
+
+/* ---------- Area quick-jump ---------- */
+function jumpToArea(key){
+  const a = AREAS.find(x=>x.key===key);
+  if (a){
+    setFocusArea(key);
+    flyTo(a.x, a.z, Math.max(a.w, a.d)*2.2);
+  }
+  closeMachinePanel();
+}
+
+/* ---------- Tour ---------- */
+function startTour(){
+  STATE.tourActive = true;
+  STATE.tourIndex = 0;
+  const bar = $('#tour-bar');
+  if (bar) bar.classList.add('open');
+  showTourStep();
+}
+function endTour(){
+  STATE.tourActive = false;
+  const bar = $('#tour-bar');
+  if (bar) bar.classList.remove('open');
+  setFocusArea(null);
+}
+function tourNext(){
+  if (STATE.tourIndex < TOUR.length-1){ STATE.tourIndex++; showTourStep(); }
+  else endTour();
+}
+function tourBack(){
+  if (STATE.tourIndex>0){ STATE.tourIndex--; showTourStep(); }
+}
+function showTourStep(){
+  const step = TOUR[STATE.tourIndex];
+  const a = AREAS.find(x=>x.key===step.area);
+  if (!a) return;
+  setFocusArea(a.key);
+  flyTo(a.x, a.z, Math.max(a.w, a.d)*2.2);
+  setText('#tour-title', a.en);
+  setText('#tour-desc', step.desc.en);
+  setText('#tour-progress', (STATE.tourIndex+1)+' / '+TOUR.length);
+  const back = $('#tour-back');
+  if (back) back.disabled = STATE.tourIndex===0;
+}
+
+/* ---------- Product selector ---------- */
+function setProduct(p){
+  STATE.product = p;
+  $all('.product-btn').forEach(b=>b.classList.toggle('active', b.dataset.product===p));
+  renderDashboard();
+}
+
+/* ---------- Build static UI: shift bar buttons, dashboard rooms ---------- */
+function buildStaticUI(){
+  const shiftWrap = $('#shift-buttons');
+  if (shiftWrap){
+    SHIFT_PHASES.forEach(p=>{
+      const b = document.createElement('button');
+      b.className='shift-btn';
+      b.dataset.phase = p.key;
+      b.innerHTML = `<span class="en">${p.en}</span><span class="hrs">${p.hrs}</span>`;
+      b.onclick = safe(()=>applyPhase(p.key));
+      shiftWrap.appendChild(b);
+    });
+  }
+
+  const roomsWrap = $('#db-rooms');
+  if (roomsWrap){
+    for (let i=1;i<=6;i++){
+      const row = document.createElement('div');
+      row.className='db-row';
+      row.innerHTML = `<span>Room ${i}</span><span id="db-room-${i}" class="val">Ready</span>`;
+      roomsWrap.appendChild(row);
+    }
+  }
+
+  $all('.area-jump').forEach(btn=>{
+    btn.onclick = safe(()=>jumpToArea(btn.dataset.area));
+  });
+}
+
+/* ---------- Boot ---------- */
+window.addEventListener('DOMContentLoaded', safe(()=>{
+  buildStaticUI();
+  initScene();
+  applyPhase('shift1');
+  renderDashboard();
+
+  const bind = (sel, handler)=>{ const el = $(sel); if (el) el.onclick = safe(handler); };
+  bind('#mp-close', closeMachinePanel);
+  bind('#dash-toggle', ()=>toggleDashboard());
+  bind('#dash-close', ()=>toggleDashboard(false));
+  bind('#maint-btn', toggleMaintenance);
+  bind('#weekly-btn', toggleWeekly);
+  bind('#tour-start', startTour);
+  bind('#tour-start-2', startTour);
+  bind('#tour-next', tourNext);
+  bind('#tour-back', tourBack);
+  bind('#tour-end', endTour);
+  bind('#view-home', goHome);
+  bind('#view-top', goTop);
+  $all('.product-btn').forEach(b=> b.onclick = safe(()=>setProduct(b.dataset.product)));
+
+  document.body.classList.toggle('is-mobile', STATE.mobile);
+
+  setInterval(safe(renderShiftBar), 30000);
+}));
+
+</script>
+<script>
+/* Mobile nav wiring (defensive) */
+window.addEventListener('DOMContentLoaded', function(){
+  try{
+    const bind = (id, handler)=>{
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.onclick = function(){
+        try { handler(); } catch(err){ console.warn('[App] mobile nav error:', err); }
+      };
+    };
+    bind('m-home', ()=>{ goHome(); setMobileActive('m-home'); });
+    bind('m-flow', ()=>{ startTour(); setMobileActive('m-flow'); });
+    bind('m-areas', ()=>{ toggleAreaSheetMobile(); setMobileActive('m-areas'); });
+    bind('m-dash', ()=>{ toggleDashboard(); setMobileActive('m-dash'); });
+    bind('m-maint', ()=>{ toggleMaintenance(); setMobileActive('m-maint'); });
+  } catch(err){
+    console.warn('[App] mobile nav bind error:', err);
+  }
+});
+function setMobileActive(id){
+  document.querySelectorAll('.mn-btn').forEach(b=>b.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+function toggleAreaSheetMobile(){
+  if (!STATE.mobile) return;
+  const nav = document.getElementById('area-nav');
+  if (!nav) return;
+  const showing = nav.style.display==='flex';
+  nav.style.cssText = showing ? '' : 'display:flex; position:fixed; top:auto; bottom:64px; inset-inline-end:8px; inset-inline-start:8px; width:auto; flex-direction:row; flex-wrap:wrap; z-index:41; background:var(--panel-solid); border:1px solid var(--border); border-radius:14px; padding:10px;';
+}
+</script>
+</body>
+</html>

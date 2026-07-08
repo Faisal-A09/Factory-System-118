@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plant Systems — RO, Firefighting &amp; Compressed Air</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="../vendor/three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>')</script>
+<script>window.THREE||document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>window.THREE||document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>window.addEventListener('DOMContentLoaded',function(){if(!window.THREE){var d=document.createElement('div');d.setAttribute('role','alert');d.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999;background:#2a1113;border:1px solid #ff5163;color:#ffd7db;font:12px monospace;padding:9px 16px;border-radius:10px;max-width:92vw;text-align:center';d.textContent='3D engine failed to load \u2014 check your internet connection. | \u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0645\u062d\u0631\u0643 \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u2014 \u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0627\u062a\u0635\u0627\u0644.';document.body.appendChild(d);}});</script>
+<style>
+  :root{
+    --bg:#0c141d; --bg-2:#101b27; --panel:#152232; --panel-2:#1b2c3e;
+    --line:#27384b; --line-soft:#1f2e3f;
+    --text:#e6edf5; --muted:#8aa0b6; --muted-2:#5f7387;
+    --water:#38bdf8; --water-deep:#0ea5e9; --water-glow:rgba(56,189,248,.5);
+    --drink:#34d399; --drink-glow:rgba(52,211,153,.45);
+    --wash:#a78bfa; --wash-glow:rgba(167,139,250,.45);
+    --fire:#f97316; --fire-deep:#ef4444; --fire-glow:rgba(249,115,22,.5);
+    --air:#facc15; --air-deep:#eab308; --air-glow:rgba(250,204,21,.5);
+    --warn:#fbbf24;
+    --display:'Space Grotesk',sans-serif; --body:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;
+    background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+    background-size:48px 48px;opacity:.25;pointer-events:none;z-index:0;
+    mask-image:radial-gradient(ellipse 120% 90% at 50% 0%,#000 30%,transparent 80%)}
+  .wrap{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:0 24px}
+
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);background:rgba(12,20,29,.82);border-bottom:1px solid var(--line)}
+  .nav-inner{max-width:1140px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-weight:700;letter-spacing:.04em;font-size:.8rem}
+  .brand .dot{width:9px;height:9px;border-radius:2px;background:var(--water);box-shadow:0 0 10px var(--water-glow)}
+  .brand .dot.f{background:var(--fire);box-shadow:0 0 10px var(--fire-glow)}
+  .brand .dot.a{background:var(--air);box-shadow:0 0 10px var(--air-glow)}
+  .nav-links{display:flex;gap:3px;margin-left:auto;flex-wrap:wrap}
+  .nav-links a{font-family:var(--mono);font-size:.7rem;letter-spacing:.02em;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:6px;transition:.18s}
+  .nav-links a:hover{color:var(--text);background:var(--panel)}
+  .nav-links a:focus-visible{outline:2px solid var(--water);outline-offset:2px}
+
+  header.hero{padding:78px 0 58px;position:relative}
+  .eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.32em;text-transform:uppercase;color:var(--muted-2);margin-bottom:22px;display:flex;align-items:center;gap:12px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent);max-width:200px}
+  h1.title{font-family:var(--display);font-weight:700;font-size:clamp(2.4rem,6vw,4.4rem);line-height:.98;letter-spacing:-.02em;margin-bottom:24px}
+  h1.title .w{color:var(--water)} h1.title .f{color:var(--fire)} h1.title .a{color:var(--air)}
+  .lede{font-size:clamp(1rem,1.6vw,1.16rem);color:var(--muted);max-width:660px;margin-bottom:40px}
+  .split{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:820px){.split{grid-template-columns:1fr}}
+  .sys-card{position:relative;border:1px solid var(--line);border-radius:14px;padding:24px 22px;background:linear-gradient(160deg,var(--panel),var(--bg-2));overflow:hidden}
+  .sys-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+  .sys-card.water::before{background:linear-gradient(90deg,var(--water),transparent)}
+  .sys-card.fire::before{background:linear-gradient(90deg,var(--fire),transparent)}
+  .sys-card.airc::before{background:linear-gradient(90deg,var(--air),transparent)}
+  .sys-card .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:11px}
+  .sys-card.water .tag{color:var(--water)} .sys-card.fire .tag{color:var(--fire)} .sys-card.airc .tag{color:var(--air)}
+  .sys-card h3{font-family:var(--display);font-size:1.35rem;font-weight:600;margin-bottom:7px}
+  .sys-card p{color:var(--muted);font-size:.9rem}
+  .sys-card .glyph{position:absolute;right:-8px;bottom:-16px;font-size:5.4rem;opacity:.06;font-family:var(--display);font-weight:700}
+
+  section{padding:68px 0;border-top:1px solid var(--line-soft)}
+  .sec-head{margin-bottom:36px}
+  .sec-num{font-family:var(--mono);font-size:.74rem;letter-spacing:.2em;color:var(--muted-2)}
+  .sec-head h2{font-family:var(--display);font-size:clamp(1.7rem,3.4vw,2.5rem);font-weight:600;letter-spacing:-.01em;margin:8px 0 14px}
+  .sec-head p{color:var(--muted);max-width:710px}
+  .accent-w{color:var(--water)} .accent-f{color:var(--fire)} .accent-a{color:var(--air)}
+  .block-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);margin:38px 0 16px;display:flex;align-items:center;gap:12px}
+  .block-label::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+  .block-label b{font-weight:700}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:8px}
+  .stats.four{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:760px){.stats,.stats.four{grid-template-columns:1fr 1fr}}
+  @media(max-width:430px){.stats,.stats.four{grid-template-columns:1fr}}
+  .stat{border:1px solid var(--line);border-radius:13px;background:var(--bg-2);padding:18px 20px;position:relative;overflow:hidden}
+  .stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--water)}
+  .stat.a::before{background:var(--air)}
+  .stat .v{font-family:var(--mono);font-weight:700;font-size:1.55rem;color:var(--water);line-height:1.05}
+  .stat.a .v{color:var(--air)}
+  .stat .v small{font-size:.82rem;color:var(--muted)}
+  .stat .k{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin-top:10px}
+
+  .tanks{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .tanks.three{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:760px){.tanks{grid-template-columns:1fr 1fr}.tanks.three{grid-template-columns:1fr}}
+  @media(max-width:430px){.tanks{grid-template-columns:1fr}}
+  .tank{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:18px;position:relative}
+  .tank .tk{display:flex;align-items:flex-end;gap:3px;height:30px;margin-bottom:14px}
+  .tank .tk i{flex:1;border-radius:2px;background:var(--water);opacity:.85;display:block}
+  .tank.t-wash .tk i{background:var(--wash)} .tank.t-ro .tk i{background:var(--drink)} .tank.t-fire .tk i{background:var(--fire)} .tank.t-air .tk i{background:var(--air)}
+  .tank h5{font-family:var(--display);font-size:1rem;font-weight:600;margin-bottom:4px}
+  .tank p{font-size:.8rem;color:var(--muted)}
+  .tank .ix{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:.66rem;color:var(--muted-2)}
+
+  /* 3D SIM */
+  .sim3d{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:radial-gradient(ellipse 90% 80% at 50% 0%,#16263a,var(--bg-2))}
+  .sim3d-stage{width:100%;height:400px;display:block;touch-action:none;cursor:grab}
+  .sim3d-stage:active{cursor:grabbing}
+  @media(max-width:600px){.sim3d-stage{height:320px}}
+  .sim3d canvas{display:block}
+  .sim3d-labels{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3}
+  .s3-label{position:absolute;transform:translate(-50%,-50%);font-family:var(--mono);font-size:.6rem;letter-spacing:.01em;color:var(--muted);background:rgba(12,20,29,.72);border:1px solid var(--line);padding:3px 7px;border-radius:6px;white-space:nowrap;pointer-events:auto;cursor:pointer;transition:color .15s,border-color .15s;backdrop-filter:blur(3px)}
+  .s3-label:hover{color:var(--text);border-color:var(--muted-2)}
+  .s3-label.active{color:#0c141d;font-weight:700;border-color:transparent}
+  .sim3d-bar{position:absolute;left:12px;top:12px;display:flex;gap:7px;z-index:5}
+  .s3-btn{font-family:var(--mono);font-size:.64rem;background:rgba(12,20,29,.78);border:1px solid var(--line);color:var(--muted);padding:6px 9px;border-radius:7px;cursor:pointer;backdrop-filter:blur(4px);transition:.15s}
+  .s3-btn:hover{color:var(--text);border-color:var(--muted-2)}
+  .s3-btn.off{opacity:.5}
+  .s3-hint{position:absolute;right:12px;bottom:10px;font-family:var(--mono);font-size:.58rem;color:var(--muted-2);z-index:5;pointer-events:none}
+  .s3-legend{position:absolute;left:12px;bottom:10px;z-index:5;font-family:var(--mono);font-size:.58rem;color:var(--muted-2);display:flex;align-items:center;gap:6px;pointer-events:none}
+  .s3-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+  /* 2D flow (drink/wash + fallback) */
+  .flow{border:1px solid var(--line);border-radius:16px;background:var(--bg-2);padding:24px 20px;overflow-x:auto}
+  .flow-head{display:flex;align-items:center;gap:10px;margin-bottom:18px;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;flex-wrap:wrap}
+  .flow-head .pill{padding:3px 9px;border-radius:5px;font-weight:700}
+  .flow.drink .flow-head .pill{background:rgba(52,211,153,.14);color:var(--drink)}
+  .flow.wash .flow-head .pill{background:rgba(167,139,250,.14);color:var(--wash)}
+  .flow-head span{color:var(--muted-2)}
+  .flow-track{display:flex;gap:0;min-width:max-content}
+  .stage{flex:0 0 auto;width:108px;position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:8px 6px 6px;border-radius:10px;transition:.2s;background:transparent;border:1px solid transparent}
+  .stage:hover,.stage:focus-visible{background:var(--panel);border-color:var(--line);outline:none}
+  .stage.active{background:var(--panel-2)}
+  .node{width:50px;height:50px;border-radius:13px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);position:relative;z-index:2;transition:.2s}
+  .node svg{width:23px;height:23px;fill:none;stroke-width:1.7}
+  .stage .nm{font-family:var(--mono);font-size:.62rem;color:var(--muted);line-height:1.3}
+  .stage.active .nm{color:var(--text)}
+  .stage .kind{font-family:var(--mono);font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+  .stage:not(:last-child)::after{content:"";position:absolute;top:32px;left:62%;width:78%;height:4px;border-radius:2px;z-index:1;background-size:18px 100%;animation:flow 1s linear infinite;opacity:.5}
+  @keyframes flow{to{background-position:18px 0}}
+  @media (prefers-reduced-motion:reduce){.stage::after{animation:none}}
+  .flow.drink .node svg{stroke:var(--drink)} .flow.drink .stage.active .node{border-color:var(--drink);box-shadow:0 0 0 3px rgba(52,211,153,.16),0 0 18px var(--drink-glow)} .flow.drink .stage:not(:last-child)::after{background-image:linear-gradient(90deg,#10b981,var(--drink))} .flow.drink .stage.active{border-color:var(--drink)}
+  .flow.wash .node svg{stroke:var(--wash)} .flow.wash .stage.active .node{border-color:var(--wash);box-shadow:0 0 0 3px rgba(167,139,250,.16),0 0 18px var(--wash-glow)} .flow.wash .stage:not(:last-child)::after{background-image:linear-gradient(90deg,#8b5cf6,var(--wash))} .flow.wash .stage.active{border-color:var(--wash)}
+
+  .stage-detail{margin-top:18px;border:1px solid var(--line);border-left:3px solid var(--water);border-radius:12px;padding:22px 24px;background:var(--panel);min-height:116px;transition:border-color .2s}
+  .stage-detail.d-drink{border-left-color:var(--drink)} .stage-detail.d-wash{border-left-color:var(--wash)} .stage-detail.d-air{border-left-color:var(--air)}
+  .stage-detail .di{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--water);margin-bottom:8px}
+  .stage-detail.d-drink .di{color:var(--drink)} .stage-detail.d-wash .di{color:var(--wash)} .stage-detail.d-air .di{color:var(--air)}
+  .stage-detail h4{font-family:var(--display);font-size:1.3rem;font-weight:600;margin-bottom:8px}
+  .stage-detail p{color:var(--muted);font-size:.95rem}
+  .stage-detail .warnbox{margin-top:12px;font-size:.84rem;color:var(--warn);font-family:var(--mono);display:flex;gap:8px;align-items:flex-start}
+
+  .ff-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.ff-layout{grid-template-columns:1fr}}
+  .building{border:1px solid var(--line);border-radius:16px;background:var(--bg-2);padding:24px}
+  .building .bh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .building .bh h4{font-family:var(--display);font-size:1.15rem;font-weight:600}
+  .building .bh .ico{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--fire);text-transform:uppercase}
+  .building .src{font-family:var(--mono);font-size:.7rem;color:var(--muted-2);margin-bottom:18px}
+  .pumps{display:flex;flex-direction:column;gap:12px}
+  .pump{border:1px solid var(--line);border-radius:11px;padding:13px 15px;background:var(--panel);display:flex;align-items:center;gap:14px;transition:.25s;position:relative;overflow:hidden}
+  .pump .led{width:11px;height:11px;border-radius:50%;background:var(--muted-2);flex-shrink:0;transition:.25s}
+  .pump .pinfo{flex:1;min-width:0}
+  .pump .pname{font-family:var(--display);font-weight:600;font-size:.96rem;display:flex;align-items:center;gap:8px}
+  .pump .prole{font-family:var(--mono);font-size:.6rem;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+  .pump .pstat{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;color:var(--muted-2);text-transform:uppercase;flex-shrink:0}
+  .pump .badge{font-family:var(--mono);font-size:.52rem;letter-spacing:.1em;padding:2px 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted-2);text-transform:uppercase}
+  .pump.standby .led{background:var(--warn);box-shadow:0 0 8px rgba(251,191,36,.4)} .pump.standby .pstat{color:var(--warn)}
+  .pump.fault .led{background:var(--fire-deep);box-shadow:0 0 8px rgba(239,68,68,.45)} .pump.fault .pstat{color:var(--fire-deep)} .pump.fault{opacity:.72}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  @media (prefers-reduced-motion:reduce){.pump.on .led{animation:none}}
+  .pump.on{border-color:var(--fire);background:linear-gradient(110deg,rgba(249,115,22,.14),var(--panel))}
+  .pump.on .led{background:var(--fire);box-shadow:0 0 0 4px rgba(249,115,22,.18),0 0 12px var(--fire-glow);animation:pulse 1.1s ease-in-out infinite}
+  .pump.on .pstat{color:var(--fire)} .pump.on .badge{border-color:var(--fire);color:var(--fire)}
+  .air-rack .pump.on{border-color:var(--air);background:linear-gradient(110deg,rgba(250,204,21,.13),var(--panel))}
+  .air-rack .pump.on .led{background:var(--air);box-shadow:0 0 0 4px rgba(250,204,21,.16),0 0 12px var(--air-glow)}
+  .air-rack .pump.on .pstat{color:var(--air)} .air-rack .pump.on .badge{border-color:var(--air);color:var(--air)}
+
+  .ff-source{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:.76rem;color:var(--muted);flex-wrap:wrap}
+  .ff-source .ft{color:var(--fire);font-weight:700} .ff-source .arr{color:var(--muted-2)}
+
+  .sim{margin-top:26px;border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:24px}
+  .sim-title{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--fire);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .sim-title::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fire);box-shadow:0 0 10px var(--fire-glow)}
+  .air-sim .sim-title{color:var(--air)} .air-sim .sim-title::before{background:var(--air);box-shadow:0 0 10px var(--air-glow)}
+  .scn-btns{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+  .scn-btn{font-family:var(--mono);font-size:.73rem;background:var(--bg-2);color:var(--muted);border:1px solid var(--line);padding:10px 15px;border-radius:9px;cursor:pointer;transition:.18s}
+  .scn-btn:hover{color:var(--text);border-color:var(--muted-2)}
+  .scn-btn.sel{background:var(--fire);color:#1a0d04;border-color:var(--fire);font-weight:700}
+  .air-sim .scn-btn.sel{background:var(--air);color:#1a1503;border-color:var(--air)}
+  .scn-btn:focus-visible{outline:2px solid var(--fire);outline-offset:2px}
+  .scn-readout{border-top:1px solid var(--line);padding-top:18px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+  .scn-readout .stamp{font-family:var(--mono);font-size:2.1rem;font-weight:700;line-height:1}
+  .scn-readout .stamp.green{color:var(--drink)} .scn-readout .stamp.amber{color:var(--warn)} .scn-readout .stamp.red{color:var(--fire)} .scn-readout .stamp.gold{color:var(--air)}
+  .scn-readout .txt h5{font-family:var(--display);font-size:1.1rem;font-weight:600;margin-bottom:5px}
+  .scn-readout .txt p{color:var(--muted);font-size:.92rem}
+  @media(max-width:680px){.scn-readout .stamp{font-size:1.5rem}}
+  .seq{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:30px}
+  @media(max-width:760px){.seq{grid-template-columns:1fr 1fr}}
+  @media(max-width:430px){.seq{grid-template-columns:1fr}}
+  .seq-step{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--bg-2)}
+  .seq-step .sn{font-family:var(--mono);font-size:.72rem;color:var(--fire);letter-spacing:.1em}
+  .seq-step h5{font-family:var(--display);font-size:.98rem;font-weight:600;margin:10px 0 6px}
+  .seq-step p{font-size:.82rem;color:var(--muted)}
+
+  .cmp{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--bg-2)}
+  table{width:100%;border-collapse:collapse;font-size:.88rem}
+  thead th{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;text-align:left;padding:15px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+  thead th.w{color:var(--water)} thead th.f{color:var(--fire)} thead th.a{color:var(--air)} thead th:first-child{color:var(--muted-2)}
+  tbody td{padding:14px 16px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--muted)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody td:first-child{font-family:var(--mono);font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text);white-space:nowrap}
+  tbody td.wv{color:#cfe9f9} tbody td.fv{color:#fbd9c4} tbody td.av{color:#f7ecc2}
+  tbody tr:hover td{background:rgba(255,255,255,.015)}
+  @media(max-width:760px){
+    table,thead,tbody,tr,td,th{display:block} thead{display:none}
+    tbody tr{border-bottom:1px solid var(--line);padding:8px 0}
+    tbody td{border:none;padding:6px 16px}
+    tbody td:first-child{color:var(--muted-2);font-size:.62rem;padding-top:12px}
+    tbody td.wv::before{content:"RO ▸ ";color:var(--water);font-family:var(--mono);font-size:.68rem}
+    tbody td.fv::before{content:"FIRE ▸ ";color:var(--fire);font-family:var(--mono);font-size:.68rem}
+    tbody td.av::before{content:"AIR ▸ ";color:var(--air);font-family:var(--mono);font-size:.68rem}
+  }
+
+  .q-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){.q-grid{grid-template-columns:1fr}}
+  .qcard{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:18px 20px;cursor:pointer;transition:.2s;position:relative}
+  .qcard.w:hover{border-color:var(--water)} .qcard.f:hover{border-color:var(--fire)} .qcard.a:hover{border-color:var(--air)}
+  .qcard.open.w{border-color:var(--water)} .qcard.open.f{border-color:var(--fire)} .qcard.open.a{border-color:var(--air)}
+  .qcard .qtag{font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:9px}
+  .qcard.w .qtag{color:var(--water)} .qcard.f .qtag{color:var(--fire)} .qcard.a .qtag{color:var(--air)}
+  .qcard .q{font-family:var(--display);font-weight:500;font-size:1rem;display:flex;justify-content:space-between;gap:14px;align-items:start}
+  .qcard .q .chev{font-family:var(--mono);color:var(--muted-2);transition:.25s;flex-shrink:0}
+  .qcard.open .q .chev{transform:rotate(45deg)}
+  .qcard.w.open .q .chev{color:var(--water)} .qcard.f.open .q .chev{color:var(--fire)} .qcard.a.open .q .chev{color:var(--air)}
+  .qcard .a-body{max-height:0;overflow:hidden;transition:max-height .32s ease,margin .32s ease,opacity .3s;opacity:0}
+  .qcard.open .a-body{max-height:340px;margin-top:13px;opacity:1}
+  .qcard .a-body p{color:var(--muted);font-size:.88rem;border-top:1px solid var(--line-soft);padding-top:13px}
+
+  .concl{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px}
+  @media(max-width:820px){.concl{grid-template-columns:1fr}}
+  .concl .card{border:1px solid var(--line);border-radius:16px;padding:28px 26px;background:linear-gradient(165deg,var(--panel),var(--bg-2));overflow:hidden}
+  .concl .card.w{border-top:2px solid var(--water)} .concl .card.f{border-top:2px solid var(--fire)} .concl .card.airc{border-top:2px solid var(--air)}
+  .concl .card .lbl{font-family:var(--mono);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px}
+  .concl .card.w .lbl{color:var(--water)} .concl .card.f .lbl{color:var(--fire)} .concl .card.airc .lbl{color:var(--air)}
+  .concl .card .big{font-family:var(--display);font-size:1.32rem;font-weight:600;line-height:1.22;margin-bottom:10px}
+  .concl .card p{color:var(--muted);font-size:.9rem}
+
+  footer{padding:48px 0 60px;border-top:1px solid var(--line-soft);text-align:center}
+  footer p{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;color:var(--muted-2)}
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="brand"><span class="dot"></span><span class="dot f"></span><span class="dot a"></span>PLANT&nbsp;SYSTEMS</div>
+    <div class="nav-links">
+      <a href="#intro">Overview</a>
+      <a href="#ro">RO</a>
+      <a href="#drink">Drinking</a>
+      <a href="#wash">Washing</a>
+      <a href="#fire">Firefighting</a>
+      <a href="#air">Compressed Air</a>
+      <a href="#compare">Compare</a>
+      <a href="#scenarios">Scenarios</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Industrial Facility · Engineering Systems</div>
+    <h1 class="title">Three systems,<br>one facility:<br><span class="w">water</span> · <span class="f">fire</span> · <span class="a">air</span>.</h1>
+    <p class="lede">An interactive walkthrough of the facility's core utility systems — the Reverse&nbsp;Osmosis plant that treats and distributes water, the firefighting network that protects people and assets, and the compressed-air system that powers the pneumatic production line. The two main processes run as live 3D simulations.</p>
+    <div class="split">
+      <div class="sys-card water"><div class="tag">System 01</div><h3>RO — Reverse Osmosis</h3><p>Treats and distributes water — supplying the drinking and washing networks.</p><span class="glyph">H₂O</span></div>
+      <div class="sys-card fire"><div class="tag">System 02</div><h3>Firefighting</h3><p>Keeps the network pressurized and delivers water on demand for fire protection.</p><span class="glyph">🜂</span></div>
+      <div class="sys-card airc"><div class="tag">System 03</div><h3>Compressed Air</h3><p>A screw compressor delivers clean, dry compressed air to run the pneumatic system.</p><span class="glyph">≋</span></div>
+    </div>
+  </div>
+</header>
+
+<section id="intro">
+  <div class="wrap reveal">
+    <div class="sec-head">
+      <span class="sec-num">// 01 — INTRODUCTION</span>
+      <h2>Three utilities, one facility</h2>
+      <p>This facility runs on three engineering systems that look unrelated but share one trait: the plant cannot operate safely or properly without any of them. The <span class="accent-w">RO system</span> handles water treatment and the supply of drinking and washing water. The <span class="accent-f">firefighting system</span> protects life and assets. The <span class="accent-a">compressed-air system</span> produces clean, dry air to drive the pneumatic equipment on the production line.</p>
+    </div>
+  </div>
+</section>
+
+<section id="ro">
+  <div class="wrap reveal">
+    <div class="sec-head">
+      <span class="sec-num">// 02 — WATER TREATMENT</span>
+      <h2><span class="accent-w">RO System</span> — source, storage &amp; treatment</h2>
+      <p>Water is supplied by the National Water Company (NWC) through two incoming lines, stored across four dedicated tanks, then treated through the RO plant. Rotate the 3D line and tap any unit to see what it does.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="v">600 <small>m³/day</small></div><div class="k">RO Plant Capacity</div></div>
+      <div class="stat"><div class="v">6.6 – 7</div><div class="k">pH Range</div></div>
+      <div class="stat"><div class="v">2 <small>lines</small></div><div class="k">Source · National Water Co.</div></div>
+    </div>
+    <div class="block-label"><b>Four main tanks</b></div>
+    <div class="tanks">
+      <div class="tank t-raw"><div class="ix">01</div><div class="tk"><i style="height:80%"></i><i style="height:60%"></i><i style="height:90%"></i></div><h5>Raw Water Tank</h5><p>Stores incoming NWC water — feed water for the RO plant.</p></div>
+      <div class="tank t-wash"><div class="ix">02</div><div class="tk"><i style="height:70%"></i><i style="height:85%"></i><i style="height:55%"></i></div><h5>Washing Water Tank</h5><p>Water for washing and general service.</p></div>
+      <div class="tank t-ro"><div class="ix">03</div><div class="tk"><i style="height:90%"></i><i style="height:75%"></i><i style="height:95%"></i></div><h5>RO Tank</h5><p>Stores treated permeate water.</p></div>
+      <div class="tank t-fire"><div class="ix">04</div><div class="tk"><i style="height:65%"></i><i style="height:80%"></i><i style="height:70%"></i></div><h5>Firefighting Tank</h5><p>Dedicated source for firefighting.</p></div>
+    </div>
+    <div class="block-label"><b>Raw water treatment line</b> · 3D · NWC → RO Tank</div>
+    <div class="sim3d" data-sim="raw">
+      <div class="sim3d-bar">
+        <button class="s3-btn" data-act="play">❚❚ Flow</button>
+        <button class="s3-btn" data-act="rotate">↻ Auto-spin</button>
+        <button class="s3-btn" data-act="reset">⤢ Reset</button>
+      </div>
+      <div class="sim3d-stage"></div>
+      <div class="sim3d-labels"></div>
+      <div class="s3-legend"><i style="background:var(--water)"></i> water flow</div>
+      <div class="s3-hint">drag to rotate · scroll to zoom · tap a unit</div>
+    </div>
+    <div class="stage-detail" id="roDetail">
+      <div class="di">Stage detail</div><h4>Select a unit in the 3D line</h4>
+      <p>Each step has a specific job. Tap a unit (or its label) to read its function.</p>
+    </div>
+  </div>
+</section>
+
+<section id="drink">
+  <div class="wrap reveal">
+    <div class="sec-head">
+      <span class="sec-num">// 03 — DRINKING WATER</span>
+      <h2>Drinking water distribution</h2>
+      <p>Treated water from the RO Tank is pumped out by four drinking water pumps and polished — carbon filtration, fine filtration, and UV disinfection — before reaching the building.</p>
+    </div>
+    <div class="flow drink">
+      <div class="flow-head"><span class="pill">FLOW B</span><span>RO Tank → 4 Pumps → Carbon Filter → Cartridge Filter → UV → Drinking Network</span></div>
+      <div class="flow-track" data-track="drink"></div>
+    </div>
+    <div class="stage-detail d-drink" id="drinkDetail">
+      <div class="di">Stage detail</div><h4>Select a stage above</h4><p>Tap a node to read each polishing step.</p>
+    </div>
+  </div>
+</section>
+
+<section id="wash">
+  <div class="wrap reveal">
+    <div class="sec-head">
+      <span class="sec-num">// 04 — WASHING WATER</span>
+      <h2>Washing water system</h2>
+      <p>The washing line is simpler: four pumps push water from the Washing Water Tank through sand filtration before it serves the facility for washing and general use.</p>
+    </div>
+    <div class="flow wash">
+      <div class="flow-head"><span class="pill">FLOW C</span><span>Washing Tank → 4 Pumps → Sand Filter → Washing Network</span></div>
+      <div class="flow-track" data-track="wash"></div>
+    </div>
+    <div class="stage-detail d-wash" id="washDetail">
+      <div class="di">Stage detail</div><h4>Select a stage above</h4><p>Tap a node to read each step.</p>
+    </div>
+  </div>
+</section>
+
+<section id="fire">
+  <div class="wrap reveal">
+    <div class="sec-head">
+      <span class="sec-num">// 05 — FIRE PROTECTION</span>
+      <h2><span class="accent-f">Firefighting System</span> — pumps &amp; coverage</h2>
+      <p>The dedicated Firefighting Water Tank feeds two buildings. Each has its own pump set of three pumps that start in a defined order. Use the simulator to see which pump runs in each situation.</p>
+    </div>
+    <div class="ff-source"><span class="ft">Firefighting Water Tank</span><span class="arr">→</span> Fire Pump Set <span class="arr">→</span> Admin Building / Production Building</div>
+    <div class="ff-layout">
+      <div class="building" data-b="admin"><div class="bh"><h4>Admin Building</h4><span class="ico">Zone A</span></div><div class="src">◂ Firefighting Tank → Pump Set</div><div class="pumps"></div></div>
+      <div class="building" data-b="prod"><div class="bh"><h4>Production Building</h4><span class="ico">Zone B</span></div><div class="src">◂ Firefighting Tank → Pump Set</div><div class="pumps"></div></div>
+    </div>
+    <div class="sim">
+      <div class="sim-title">Live Operating Simulator</div>
+      <div class="scn-btns" id="scnBtns"></div>
+      <div class="scn-readout"><div class="stamp green" id="scnStamp">OK</div><div class="txt"><h5 id="scnTitle">Normal condition</h5><p id="scnDesc">The firefighting network stays pressurized and ready. No pump is actively running.</p></div></div>
+    </div>
+    <div class="seq">
+      <div class="seq-step"><span class="sn">SEQ 01</span><h5>Pressurized</h5><p>In normal condition the network holds pressure. Pumps wait on standby.</p></div>
+      <div class="seq-step"><span class="sn">SEQ 02</span><h5>Jockey starts</h5><p>A small pressure drop triggers the jockey pump to restore pressure.</p></div>
+      <div class="seq-step"><span class="sn">SEQ 03</span><h5>Electric starts</h5><p>A major drop or real fire demand brings on the electric fire pump.</p></div>
+      <div class="seq-step"><span class="sn">SEQ 04</span><h5>Diesel backup</h5><p>If the electric pump fails or power is lost, the diesel pump starts automatically.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="air">
+  <div class="wrap reveal">
+    <div class="sec-head">
+      <span class="sec-num">// 06 — COMPRESSED AIR</span>
+      <h2><span class="accent-a">Compressed Air System</span> — screw compressor</h2>
+      <p>A two-stage screw compressor draws in outside air, compresses and cools it twice, dries and filters it, stores it, then sends clean dry air to production. Rotate the 3D line and tap any unit to see what it does.</p>
+    </div>
+    <div class="stats four">
+      <div class="stat a"><div class="v">483.3 <small>CFM</small></div><div class="k">Compressor Capacity</div></div>
+      <div class="stat a"><div class="v">7 – 8.4 <small>bar</small></div><div class="k">Line Pressure</div></div>
+      <div class="stat a"><div class="v">84.16 – 88 <small>ACM/h</small></div><div class="k">Flow to Production</div></div>
+      <div class="stat a"><div class="v">50 – 60 <small>°C</small></div><div class="k">Running Temperature</div></div>
+    </div>
+    <div class="block-label"><b>Air process line</b> · 3D · Intake → Pneumatic System</div>
+    <div class="sim3d" data-sim="air">
+      <div class="sim3d-bar">
+        <button class="s3-btn" data-act="play">❚❚ Flow</button>
+        <button class="s3-btn" data-act="rotate">↻ Auto-spin</button>
+        <button class="s3-btn" data-act="reset">⤢ Reset</button>
+      </div>
+      <div class="sim3d-stage"></div>
+      <div class="sim3d-labels"></div>
+      <div class="s3-legend"><i style="background:var(--air)"></i> compressed air</div>
+      <div class="s3-hint">drag to rotate · scroll to zoom · tap a unit</div>
+    </div>
+    <div class="stage-detail d-air" id="airDetail">
+      <div class="di">Stage detail</div><h4>Select a unit in the 3D line</h4>
+      <p>The air is compressed in two stages with cooling between them. Tap a unit to read each step.</p>
+    </div>
+
+    <div class="block-label"><b>Compressor lineup</b> · only one runs at a time</div>
+    <div class="air-sim sim air-rack">
+      <div class="sim-title">Compressor Duty Simulator</div>
+      <div class="pumps" id="compRack" style="margin-bottom:20px"></div>
+      <div class="scn-btns" id="airScnBtns"></div>
+      <div class="scn-readout"><div class="stamp gold" id="airStamp">RUN</div><div class="txt"><h5 id="airTitle">Normal duty</h5><p id="airDesc">The primary compressor carries the load. The backup and emergency units wait on standby — only one compressor runs at a time.</p></div></div>
+    </div>
+
+    <div class="block-label"><b>Three air storage tanks</b></div>
+    <div class="tanks three">
+      <div class="tank t-air"><div class="ix">01</div><div class="tk"><i style="height:85%"></i><i style="height:70%"></i><i style="height:90%"></i></div><h5>Air Storage Tank 1</h5><p>Buffers compressed air and smooths demand from production.</p></div>
+      <div class="tank t-air"><div class="ix">02</div><div class="tk"><i style="height:75%"></i><i style="height:88%"></i><i style="height:65%"></i></div><h5>Air Storage Tank 2</h5><p>Adds reserve volume so pressure stays stable under load.</p></div>
+      <div class="tank t-air"><div class="ix">03</div><div class="tk"><i style="height:90%"></i><i style="height:72%"></i><i style="height:82%"></i></div><h5>Air Storage Tank 3</h5><p>Extra storage supporting continuous pneumatic operation.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap reveal">
+    <div class="sec-head">
+      <span class="sec-num">// 07 — SIDE BY SIDE</span>
+      <h2>Comparison table</h2>
+      <p>The same facility, three different design intents.</p>
+    </div>
+    <div class="cmp">
+      <table>
+        <thead><tr><th>Item</th><th class="w">RO System</th><th class="f">Firefighting</th><th class="a">Compressed Air</th></tr></thead>
+        <tbody>
+          <tr><td>Main Purpose</td><td class="wv">Water treatment &amp; supply of drinking + washing water</td><td class="fv">Fire protection and emergency response</td><td class="av">Clean dry air to run the pneumatic system</td></tr>
+          <tr><td>Source</td><td class="wv">National Water Co. — two lines</td><td class="fv">Firefighting Water Tank</td><td class="av">Outside air via the screw compressor</td></tr>
+          <tr><td>Key Components</td><td class="wv">Sand filter, dosing, cartridge filter, HP pump, RO membranes, carbon filter, UV</td><td class="fv">Jockey, electric &amp; diesel pumps, fire water tank</td><td class="av">Dust filter, 2 screw stages, 2 coolers, dryer, DDP/PDP filters, 3 storage tanks</td></tr>
+          <tr><td>Redundancy</td><td class="wv">Multiple pumps per line</td><td class="fv">3 pumps per building (jockey/electric/diesel)</td><td class="av">3 compressors: primary, backup, emergency (one runs at a time)</td></tr>
+          <tr><td>Operation</td><td class="wv">Continuous / demand-based treatment</td><td class="fv">Emergency &amp; pressure-based</td><td class="av">Continuous on demand · 7–8.4 bar · 50–60 °C</td></tr>
+          <tr><td>Main Risk</td><td class="wv">Membrane damage, scaling, chlorine carryover</td><td class="fv">Pump failure, pressure loss, power failure</td><td class="av">Dust ingress, moisture carryover, overheating</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="scenarios">
+  <div class="wrap reveal">
+    <div class="sec-head">
+      <span class="sec-num">// 08 — CHECK YOURSELF</span>
+      <h2>Interactive training scenarios</h2>
+      <p>Think about your answer first, then tap a card to reveal it.</p>
+    </div>
+    <div class="q-grid" id="qGrid"></div>
+  </div>
+</section>
+
+<section id="conclusion">
+  <div class="wrap reveal">
+    <div class="sec-head">
+      <span class="sec-num">// 09 — TAKEAWAY</span>
+      <h2>One facility, three specialized utilities</h2>
+      <p>The facility is built around three independent utility systems, each with a clear and separate job.</p>
+    </div>
+    <div class="concl">
+      <div class="card w"><div class="lbl">RO System</div><div class="big">Treatment, drinking &amp; washing water.</div><p>From the NWC source through four tanks and the RO line, it delivers safe drinking water and reliable washing water — while protecting the membranes that make it possible.</p></div>
+      <div class="card f"><div class="lbl">Firefighting System</div><div class="big">Emergency water for fire protection.</div><p>A dedicated tank and a layered pump sequence keep firefighting water available at all times — even if power fails — focused on life safety and asset protection.</p></div>
+      <div class="card airc"><div class="lbl">Compressed Air System</div><div class="big">Clean dry air for the pneumatic line.</div><p>A two-stage screw compressor, with backup and emergency units, supplies filtered and dried compressed air at stable pressure to keep production running.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap"><p>END OF MODULE · RO · FIREFIGHTING · COMPRESSED AIR · INTERACTIVE TRAINING</p></div></footer>
+
+<script>
+/* ===== ICONS (for 2D flows / fallback) ===== */
+const ic={
+  line:'<svg viewBox="0 0 24 24"><path d="M3 12h18M3 8h18M3 16h18"/></svg>',
+  tank:'<svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M5 13c2 0 2 2 4.5 2S12 13 14 13s2 2 4.5 2"/></svg>',
+  pump:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 5v7l4 3"/></svg>',
+  sand:'<svg viewBox="0 0 24 24"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>',
+  flask:'<svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 8a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-8V3"/></svg>',
+  cart:'<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 8h10M7 13h10"/></svg>',
+  hp:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 5v7l4 3M2 12h3M19 12h3"/></svg>',
+  membrane:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16M14 4v16"/></svg>',
+  carbon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/></svg>',
+  uv:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
+  net:'<svg viewBox="0 0 24 24"><path d="M12 3v6M5 21v-6a7 7 0 0 1 14 0v6"/><circle cx="12" cy="9" r="2"/></svg>'
+};
+
+/* ===== FLOW DATA ===== */
+const flows={
+  raw:[
+    {nm:'NWC · 2 Lines',kind:'source',ic:ic.line,t:'National Water Company — Two Lines',d:'The water source. NWC supplies the site through two incoming lines that feed the storage tanks, giving redundancy and adequate supply.'},
+    {nm:'Raw Water Tank',kind:'storage',ic:ic.tank,t:'Raw Water Tank',d:'Stores normal incoming water from the National Water Company. This is the feed water for the RO plant.'},
+    {nm:'Transfer Pumps',kind:'pumping',ic:ic.pump,t:'Two Transfer Pumps',d:'Two transfer pumps provide the required pressure and flow to move raw water toward the sand filter and into the RO plant.'},
+    {nm:'Sand Filter',kind:'filter',ic:ic.sand,t:'Sand Filter',d:'Removes suspended solids and turbidity from the raw water before the finer treatment stages.'},
+    {nm:'Chemical Dosing',kind:'dosing',ic:ic.flask,t:'Chemical Dosing',d:'Three chemicals condition the water: Chlorine disinfects; a Dechlorination chemical then removes that chlorine before the membranes; Anti-Scalant prevents scale and salt deposits.',warn:'Chlorine must be removed before the membranes — that is the dechlorination step.'},
+    {nm:'Cartridge Filter',kind:'filter',ic:ic.cart,t:'Cartridge Filter',d:'Captures fine suspended particles so they don\'t reach and foul the RO membranes.'},
+    {nm:'HP Pump · 8 bar',kind:'pumping',ic:ic.hp,t:'High-Pressure Pump (≈8 bar)',d:'Raises the water to about 8 bar — the pressure needed to push water through the RO membranes and drive reverse osmosis.'},
+    {nm:'RO Membranes',kind:'membrane',ic:ic.membrane,t:'RO Membranes',d:'Separate salts, impurities and unwanted particles from the water. The clean output is called permeate water — the heart of purification.',warn:'Chlorine damages these membranes — which is why dechlorination came first.'},
+    {nm:'RO Tank',kind:'storage',ic:ic.tank,t:'RO Tank',d:'Stores the treated permeate water, ready for distribution to the drinking water network.'}
+  ],
+  drink:[
+    {nm:'RO Tank',kind:'storage',ic:ic.tank,t:'RO Tank',d:'The starting point for distribution — stores the treated permeate water from the RO plant.'},
+    {nm:'4 Drinking Pumps',kind:'pumping',ic:ic.pump,t:'Four Drinking Water Pumps',d:'Four pumps draw treated water from the RO Tank and provide flow and pressure for the drinking water network.'},
+    {nm:'Carbon Filter',kind:'filter',ic:ic.carbon,t:'Carbon Filter',d:'Removes odor, taste and remaining organic impurities, improving drinking water quality.'},
+    {nm:'Cartridge Filter',kind:'filter',ic:ic.cart,t:'Cartridge Filter',d:'Removes fine suspended particles before the final disinfection stage.'},
+    {nm:'UV Treatment',kind:'disinfect',ic:ic.uv,t:'UV Treatment Unit',d:'Final disinfection — ultraviolet light kills or deactivates microorganisms without adding chemicals.'},
+    {nm:'Drinking Network',kind:'output',ic:ic.net,t:'Building Drinking Water Network',d:'After UV treatment, clean water is distributed to the facility for drinking water use.'}
+  ],
+  wash:[
+    {nm:'Washing Tank',kind:'storage',ic:ic.tank,t:'Washing Water Tank',d:'Stores water used for washing and general service purposes, following a simpler treatment path.'},
+    {nm:'4 Washing Pumps',kind:'pumping',ic:ic.pump,t:'Four Washing Water Pumps',d:'Four pumps — not two — provide the flow and pressure needed to serve the facility\'s washing water demand.'},
+    {nm:'Sand Filter',kind:'filter',ic:ic.sand,t:'Sand Filter',d:'The washing water passes through sand filtration to remove suspended solids before supply to the building.'},
+    {nm:'Washing Network',kind:'output',ic:ic.net,t:'Building Washing Water Network',d:'Filtered washing water is supplied to the facility for washing and general service use.'}
+  ],
+  air:[
+    {nm:'Air Intake',kind:'intake',t:'Air Intake',d:'Outside air is drawn into the screw compressor as the working fluid that will be compressed and supplied to the pneumatic system.'},
+    {nm:'Dust Filter',kind:'filter',t:'Dust Filter',d:'The incoming air passes through a dust filter that stops dust and particles from entering and damaging the screw elements.'},
+    {nm:'1st Screw Stage',kind:'compress',t:'First Screw Stage',d:'The first stage of the screw compresses the air. Compression raises both its pressure and its temperature.'},
+    {nm:'1st Cooling',kind:'cooling',t:'First Cooling Stage',d:'The hot air enters the first cooling stage (intercooler) to bring the temperature down before the next compression stage, improving efficiency.'},
+    {nm:'2nd Screw Stage',kind:'compress',t:'Second Screw Stage',d:'The air enters the second stage of the screw and is compressed a second time, again raising pressure and temperature.'},
+    {nm:'2nd Cooling',kind:'cooling',t:'Second Cooling Stage',d:'The air returns to the second cooling stage (aftercooler) to cool it down again after the second compression.'},
+    {nm:'Dehumidifier',kind:'drying',t:'Dehumidification Filter',d:'A dehumidification filter removes moisture from the compressed air, protecting downstream equipment and the pneumatic system from water carryover.'},
+    {nm:'DDP Filter',kind:'filter',t:'DDP Filter',d:'A line filter that further cleans and conditions the compressed air before it goes to the storage tanks.'},
+    {nm:'Air Storage',kind:'storage',t:'Air Storage Tanks',d:'Compressed air is stored in three storage tanks, buffering supply and smoothing out demand from production.'},
+    {nm:'PDP Filter',kind:'filter',t:'PDP Filter',d:'A final filter polishes the air as it leaves storage on its way to production, ensuring clean dry air reaches the line.'},
+    {nm:'Production',kind:'output',t:'Production / Pneumatic System',d:'Clean, dry compressed air reaches production and operates the pneumatic system that drives the equipment.'}
+  ]
+};
+
+/* ===== 2D track (drink/wash + fallback) ===== */
+function renderStages(track,detailEl,stages,dCls){
+  stages.forEach((s,i)=>{
+    const el=document.createElement('button');
+    el.className='stage';el.setAttribute('aria-label',s.nm);
+    el.innerHTML=`<div class="node">${s.ic||''}</div><span class="kind">${s.kind}</span><span class="nm">${s.nm}</span>`;
+    el.addEventListener('click',()=>{
+      track.querySelectorAll('.stage').forEach(x=>x.classList.remove('active'));
+      el.classList.add('active');
+      detailEl.className='stage-detail '+(dCls||'');
+      const lbl=(s.kind==='source'||s.kind==='intake')?s.kind.charAt(0).toUpperCase()+s.kind.slice(1):'Stage '+String(i+1).padStart(2,'0');
+      detailEl.innerHTML=`<div class="di">${lbl} · ${s.kind}</div><h4>${s.t}</h4><p>${s.d}</p>${s.warn?`<div class="warnbox">⚠ ${s.warn}</div>`:''}`;
+    });
+    track.appendChild(el);
+  });
+}
+renderStages(document.querySelector('[data-track="drink"]'),document.getElementById('drinkDetail'),flows.drink,'d-drink');
+renderStages(document.querySelector('[data-track="wash"]'),document.getElementById('washDetail'),flows.wash,'d-wash');
+
+/* ===== 3D SIMULATION ===== */
+function makeSim(root,stages,opt){
+  const stageEl=root.querySelector('.sim3d-stage');
+  const labelLayer=root.querySelector('.sim3d-labels');
+  const detailEl=document.getElementById(opt.detailId);
+  const color=opt.color, dCls=opt.dCls||'';
+
+  function selectDetail(i){
+    const s=stages[i];
+    detailEl.className='stage-detail '+dCls;
+    const lbl=(s.kind==='source'||s.kind==='intake')?s.kind.charAt(0).toUpperCase()+s.kind.slice(1):'Stage '+String(i+1).padStart(2,'0');
+    detailEl.innerHTML=`<div class="di">${lbl} · ${s.kind}</div><h4>${s.t}</h4><p>${s.d}</p>${s.warn?`<div class="warnbox">⚠ ${s.warn}</div>`:''}`;
+  }
+
+  // fallback to 2D if no WebGL / THREE
+  let renderer;
+  if(window.THREE){ try{ renderer=new THREE.WebGLRenderer({antialias:true,alpha:true}); }catch(e){ renderer=null; } }
+  if(!window.THREE || !renderer){
+    root.querySelectorAll('.sim3d-bar,.s3-hint,.s3-legend').forEach(n=>n.remove());
+    stageEl.style.height='auto'; stageEl.style.overflowX='auto'; stageEl.style.cursor='default';
+    const flow=document.createElement('div'); flow.className='flow '+(opt.themeClass||'');
+    const track=document.createElement('div'); track.className='flow-track'; track.style.padding='6px 4px';
+    flow.appendChild(track); stageEl.appendChild(flow);
+    renderStages(track,detailEl,stages,dCls);
+    track.querySelector('.stage').click();
+    return;
+  }
+
+  const W0=stageEl.clientWidth||800, H0=stageEl.clientHeight||400;
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(W0,H0);
+  stageEl.appendChild(renderer.domElement);
+
+  const scene=new THREE.Scene();
+  const N=stages.length, SP=2.6, WID=(N-1)*SP, X0=-WID/2, PY=2.2;
+  scene.fog=new THREE.Fog(0x0c141d, WID*0.9, WID*2.6);
+
+  const camera=new THREE.PerspectiveCamera(45, W0/H0, 0.1, 300);
+  const target=new THREE.Vector3(0,0.75,0);
+  const view={az:-0.72, pol:1.02, rad:Math.min(Math.max(WID*0.82,9),60)};
+  const home={...view};
+  function updateCam(){
+    camera.position.set(
+      target.x+view.rad*Math.sin(view.pol)*Math.cos(view.az),
+      target.y+view.rad*Math.cos(view.pol),
+      target.z+view.rad*Math.sin(view.pol)*Math.sin(view.az)
+    );
+    camera.lookAt(target);
+  }
+
+  // lights
+  scene.add(new THREE.AmbientLight(0x8aa0b6,0.55));
+  const hemi=new THREE.HemisphereLight(0xbfdcff,0x0c141d,0.55); scene.add(hemi);
+  const dir=new THREE.DirectionalLight(0xffffff,0.85); dir.position.set(6,9,7); scene.add(dir);
+  const pl=new THREE.PointLight(color,0.7,50); pl.position.set(0,5,5); scene.add(pl);
+
+  // ground
+  const plat=new THREE.Mesh(new THREE.BoxGeometry(WID+5,0.3,3.4),
+    new THREE.MeshStandardMaterial({color:0x0e1925,metalness:.3,roughness:.9}));
+  plat.position.y=-0.26; scene.add(plat);
+  const grid=new THREE.GridHelper(Math.ceil(WID+8),Math.ceil(WID+8),color,0x1f2e3f);
+  grid.material.opacity=0.22; grid.material.transparent=true; grid.position.y=-0.09; scene.add(grid);
+
+  // helpers to build units
+  const baseMat=()=>new THREE.MeshStandardMaterial({color:0x33485e,metalness:.55,roughness:.42});
+  const accMat=()=>new THREE.MeshStandardMaterial({color:0x46607a,metalness:.6,roughness:.4});
+  function add(group,geo,mat,x,y,z,rx,ry,rz){const m=new THREE.Mesh(geo,mat);m.position.set(x||0,y||0,z||0);if(rx)m.rotation.x=rx;if(ry)m.rotation.y=ry;if(rz)m.rotation.z=rz;group.add(m);return m;}
+  function makeUnit(kind){
+    const g=new THREE.Group(); const meshes=[]; let topY=1.1; const M=baseMat(); const A=accMat();
+    const push=m=>{meshes.push(m);return m;};
+    if(kind==='storage'){
+      push(add(g,new THREE.CylinderGeometry(0.72,0.72,1.9,24),M,0,0.95,0));
+      push(add(g,new THREE.CylinderGeometry(0.74,0.74,0.12,24),A,0,1.86,0)); topY=1.95;
+    }else if(kind==='source'||kind==='line'){
+      push(add(g,new THREE.BoxGeometry(1.1,1.1,1.0),M,0,0.55,0));
+      push(add(g,new THREE.BoxGeometry(1.16,0.12,1.06),A,0,1.0,0)); topY=1.1;
+    }else if(kind==='intake'){
+      push(add(g,new THREE.CylinderGeometry(0.78,0.34,1.0,22),M,0,0.55,0));
+      push(add(g,new THREE.CylinderGeometry(0.3,0.3,0.5,18),A,0,1.2,0)); topY=1.45;
+    }else if(kind==='pumping'){
+      push(add(g,new THREE.BoxGeometry(1.2,0.7,1.0),M,0,0.35,0));
+      push(add(g,new THREE.CylinderGeometry(0.34,0.34,0.95,20),A,0,0.85,0,0,0,Math.PI/2)); topY=1.25;
+    }else if(kind==='filter'||kind==='dosing'||kind==='drying'){
+      push(add(g,new THREE.CylinderGeometry(0.48,0.48,1.5,22),M,0,0.75,0));
+      push(add(g,new THREE.CylinderGeometry(0.54,0.54,0.18,22),A,0,1.55,0)); topY=1.66;
+    }else if(kind==='compress'){
+      push(add(g,new THREE.BoxGeometry(1.2,0.4,1.7),A,0,0.2,0));
+      push(add(g,new THREE.CylinderGeometry(0.42,0.42,1.5,22),M,-0.26,0.75,0,Math.PI/2,0,0));
+      push(add(g,new THREE.CylinderGeometry(0.42,0.42,1.5,22),M, 0.26,0.75,0,Math.PI/2,0,0)); topY=1.2;
+    }else if(kind==='cooling'){
+      push(add(g,new THREE.BoxGeometry(1.1,0.85,1.1),M,0,0.42,0));
+      for(let k=0;k<4;k++) push(add(g,new THREE.BoxGeometry(1.16,0.07,1.1),A,0,0.95+k*0.16,0)); topY=1.55;
+    }else if(kind==='membrane'){
+      push(add(g,new THREE.CylinderGeometry(0.5,0.5,2.0,22),M,0,1.05,0,0,0,Math.PI/2));
+      push(add(g,new THREE.SphereGeometry(0.5,18,14),A,-1.0,1.05,0));
+      push(add(g,new THREE.SphereGeometry(0.5,18,14),A, 1.0,1.05,0)); topY=1.6;
+    }else if(kind==='disinfect'){
+      push(add(g,new THREE.BoxGeometry(0.7,1.5,0.7),M,0,0.78,0));
+      push(add(g,new THREE.CylinderGeometry(0.16,0.16,1.3,16),A,0,0.85,0)); topY=1.6;
+    }else if(kind==='output'){
+      push(add(g,new THREE.BoxGeometry(1.5,1.1,1.3),M,0,0.55,0));
+      push(add(g,new THREE.BoxGeometry(1.6,0.18,1.4),A,0,1.18,0));
+      push(add(g,new THREE.BoxGeometry(0.3,0.6,0.3),A,0.45,1.5,0)); topY=1.35;
+    }else{
+      push(add(g,new THREE.BoxGeometry(1,1,1),M,0,0.5,0)); topY=1.05;
+    }
+    g.userData.meshes=meshes; g.userData.topY=topY;
+    return g;
+  }
+
+  // build units + pipe path
+  const units=[]; const pickables=[]; const pts=[];
+  pts.push(new THREE.Vector3(X0-SP*0.6,PY,0));
+  stages.forEach((s,i)=>{
+    const x=X0+i*SP;
+    const u=makeUnit(s.kind); u.position.set(x,0,0); u.userData.index=i; scene.add(u);
+    u.userData.meshes.forEach(m=>{m.userData.index=i; pickables.push(m);});
+    // connector riser
+    const ch=PY-u.userData.topY;
+    if(ch>0.06){ add(u,new THREE.CylinderGeometry(0.06,0.06,ch,10),accMat(),0,u.userData.topY+ch/2,0); }
+    units.push(u);
+    pts.push(new THREE.Vector3(x,PY,0));
+  });
+  pts.push(new THREE.Vector3(X0+(N-1)*SP+SP*0.6,PY,0));
+
+  const curve=new THREE.CatmullRomCurve3(pts);
+  const pipe=new THREE.Mesh(new THREE.TubeGeometry(curve,N*14,0.09,12,false),
+    new THREE.MeshStandardMaterial({color:0x2c3e52,metalness:.7,roughness:.35}));
+  scene.add(pipe);
+
+  // flow particles
+  const PCOUNT=Math.max(16,N*2);
+  const pGeo=new THREE.SphereGeometry(0.085,10,10);
+  const pMat=new THREE.MeshBasicMaterial({color:color});
+  const parts=[];
+  for(let i=0;i<PCOUNT;i++){
+    const m=new THREE.Mesh(pGeo,pMat); m.userData.t=i/PCOUNT; scene.add(m); parts.push(m);
+  }
+
+  // labels
+  const labels=stages.map((s,i)=>{
+    const d=document.createElement('div'); d.className='s3-label'; d.textContent=s.nm;
+    d.addEventListener('click',()=>select(i));
+    labelLayer.appendChild(d); return d;
+  });
+
+  let selected=-1;
+  const cHex=new THREE.Color(color);
+  function setActive(u,on){
+    u.scale.setScalar(on?1.08:1.0);
+    u.userData.meshes.forEach(m=>{
+      if(on){ m.material.emissive=cHex; m.material.emissiveIntensity=0.7; }
+      else { m.material.emissive=new THREE.Color(0x000000); m.material.emissiveIntensity=0; }
+    });
+  }
+  function select(i){
+    if(selected===i) { return; }
+    selected=i;
+    units.forEach((u,idx)=>setActive(u,idx===i));
+    labels.forEach((l,idx)=>{ l.classList.toggle('active',idx===i); l.style.background=idx===i?color:''; });
+    selectDetail(i);
+  }
+
+  // projection for labels
+  const v=new THREE.Vector3();
+  function updateLabels(){
+    const w=stageEl.clientWidth, h=stageEl.clientHeight;
+    units.forEach((u,i)=>{
+      v.set(u.position.x, u.userData.topY+0.45, 0); v.project(camera);
+      if(v.z>1){ labels[i].style.display='none'; return; }
+      labels[i].style.display='block';
+      labels[i].style.left=((v.x*0.5+0.5)*w)+'px';
+      labels[i].style.top=((-v.y*0.5+0.5)*h)+'px';
+    });
+  }
+
+  // raycast pick
+  const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+  function pick(cx,cy){
+    const r=renderer.domElement.getBoundingClientRect();
+    mouse.x=((cx-r.left)/r.width)*2-1; mouse.y=-((cy-r.top)/r.height)*2+1;
+    ray.setFromCamera(mouse,camera);
+    const hit=ray.intersectObjects(pickables,false);
+    if(hit.length){ select(hit[0].object.userData.index); }
+  }
+
+  // custom orbit controls
+  let dragging=false,lx=0,ly=0,moved=0,downX=0,downY=0;
+  const el=renderer.domElement;
+  el.addEventListener('pointerdown',e=>{dragging=true;moved=0;lx=downX=e.clientX;ly=downY=e.clientY;el.setPointerCapture(e.pointerId);});
+  el.addEventListener('pointermove',e=>{
+    if(!dragging)return;
+    const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    moved+=Math.abs(dx)+Math.abs(dy);
+    view.az-=dx*0.005; view.pol=Math.min(1.46,Math.max(0.32,view.pol-dy*0.005));
+  });
+  el.addEventListener('pointerup',e=>{
+    dragging=false;
+    if(moved<6) pick(e.clientX,e.clientY);
+  });
+  el.addEventListener('wheel',e=>{e.preventDefault();view.rad=Math.min(80,Math.max(5,view.rad+e.deltaY*0.02));},{passive:false});
+  // pinch
+  let pinch=0;
+  el.addEventListener('touchmove',e=>{
+    if(e.touches.length===2){
+      const a=e.touches[0],b=e.touches[1];
+      const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+      if(pinch) view.rad=Math.min(80,Math.max(5,view.rad+(pinch-d)*0.04));
+      pinch=d; e.preventDefault();
+    }
+  },{passive:false});
+  el.addEventListener('touchend',()=>{pinch=0;});
+
+  // toolbar
+  let playing=true, autoRot=false;
+  const bPlay=root.querySelector('[data-act="play"]');
+  const bRot=root.querySelector('[data-act="rotate"]');
+  const bReset=root.querySelector('[data-act="reset"]');
+  bPlay.addEventListener('click',()=>{playing=!playing;bPlay.textContent=playing?'❚❚ Flow':'▶ Flow';bPlay.classList.toggle('off',!playing);});
+  bRot.addEventListener('click',()=>{autoRot=!autoRot;bRot.classList.toggle('off',!autoRot);});
+  bReset.addEventListener('click',()=>{view.az=home.az;view.pol=home.pol;view.rad=home.rad;});
+
+  // visibility-gated loop
+  let visible=true;
+  new IntersectionObserver(es=>{visible=es[0].isIntersecting;},{threshold:0.05}).observe(root);
+  const clock=new THREE.Clock();
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function frame(){
+    requestAnimationFrame(frame);
+    if(!visible) return;
+    const dt=clock.getDelta();
+    if(autoRot && !dragging) view.az+=0.0018*60*dt;
+    if(playing && !reduce){
+      parts.forEach(p=>{
+        p.userData.t=(p.userData.t+0.05*dt)%1;
+        const pt=curve.getPointAt(p.userData.t); p.position.copy(pt);
+      });
+    }
+    updateCam(); renderer.render(scene,camera); updateLabels();
+  }
+  // resize
+  new ResizeObserver(()=>{
+    const w=stageEl.clientWidth,h=stageEl.clientHeight;
+    if(w&&h){camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);}
+  }).observe(stageEl);
+
+  updateCam();
+  // initial particle placement
+  parts.forEach(p=>{p.position.copy(curve.getPointAt(p.userData.t));});
+  select(0);
+  frame();
+}
+
+window.addEventListener('load',()=>{
+  makeSim(document.querySelector('.sim3d[data-sim="raw"]'),flows.raw,
+    {detailId:'roDetail',color:0x38bdf8,dCls:'',themeClass:'drink'});
+  makeSim(document.querySelector('.sim3d[data-sim="air"]'),flows.air,
+    {detailId:'airDetail',color:0xfacc15,dCls:'d-air',themeClass:'wash'});
+});
+
+/* ===== FIREFIGHTING ===== */
+const pumpDefs=[
+  {key:'jockey',name:'Jockey Pump',role:'Maintains network pressure',badge:'1st'},
+  {key:'electric',name:'Electric Fire Pump',role:'Main — fire / major drop',badge:'Main'},
+  {key:'diesel',name:'Diesel Fire Pump',role:'Emergency backup',badge:'Backup'}
+];
+document.querySelectorAll('.building .pumps').forEach(c=>{
+  pumpDefs.forEach(p=>{
+    const el=document.createElement('div');el.className='pump';el.dataset.pump=p.key;
+    el.innerHTML=`<span class="led"></span><div class="pinfo"><div class="pname">${p.name} <span class="badge">${p.badge}</span></div><div class="prole">${p.role}</div></div><span class="pstat">Idle</span>`;
+    c.appendChild(el);
+  });
+});
+const scenarios=[
+  {id:'normal',label:'Normal',stamp:'OK',cls:'green',title:'Normal condition',desc:'The firefighting network stays pressurized and ready. No pump is actively running — all wait on standby.',pumps:{}},
+  {id:'small',label:'Small pressure drop',stamp:'P↓',cls:'amber',title:'Small pressure drop → Jockey pump',desc:'A minor pressure drop is detected. The jockey pump starts and tops the pressure back up, avoiding unnecessary starts of the main pumps.',pumps:{jockey:'on'}},
+  {id:'fire',label:'Fire / major drop',stamp:'!',cls:'red',title:'Fire demand → Electric fire pump',desc:'Pressure keeps dropping or there is an actual fire. The electric fire pump starts to deliver the required flow and pressure.',pumps:{jockey:'standby',electric:'on'}},
+  {id:'power',label:'Fire + power loss',stamp:'⚡',cls:'red',title:'Power lost → Diesel backup pump',desc:'The electric pump has failed or power is unavailable during a fire. The diesel fire pump starts automatically as the emergency backup.',pumps:{electric:'standby',diesel:'on'}}
+];
+const btnWrap=document.getElementById('scnBtns'),stamp=document.getElementById('scnStamp'),scnTitle=document.getElementById('scnTitle'),scnDesc=document.getElementById('scnDesc');
+function applyScenario(s){
+  document.querySelectorAll('#scnBtns .scn-btn').forEach(b=>b.classList.toggle('sel',b.dataset.id===s.id));
+  stamp.textContent=s.stamp;stamp.className='stamp '+s.cls;scnTitle.textContent=s.title;scnDesc.textContent=s.desc;
+  document.querySelectorAll('.building .pump').forEach(p=>{
+    p.classList.remove('on','standby');const st=s.pumps[p.dataset.pump];const t=p.querySelector('.pstat');
+    if(st==='on'){p.classList.add('on');t.textContent='Running';}
+    else if(st==='standby'){p.classList.add('standby');t.textContent='Standby';}
+    else t.textContent='Idle';
+  });
+}
+scenarios.forEach(s=>{const b=document.createElement('button');b.className='scn-btn';b.dataset.id=s.id;b.textContent=s.label;b.addEventListener('click',()=>applyScenario(s));btnWrap.appendChild(b);});
+applyScenario(scenarios[0]);
+
+/* ===== COMPRESSOR DUTY ===== */
+const compDefs=[
+  {key:'primary',name:'Primary Compressor',role:'Carries the load in normal duty',badge:'Primary'},
+  {key:'backup',name:'Backup Compressor',role:'Takes over if primary stops',badge:'Backup'},
+  {key:'emergency',name:'Emergency Compressor',role:'Last-resort supply',badge:'Emergency'}
+];
+const compRack=document.getElementById('compRack');
+compDefs.forEach(c=>{
+  const el=document.createElement('div');el.className='pump';el.dataset.comp=c.key;
+  el.innerHTML=`<span class="led"></span><div class="pinfo"><div class="pname">${c.name} <span class="badge">${c.badge}</span></div><div class="prole">${c.role}</div></div><span class="pstat">Idle</span>`;
+  compRack.appendChild(el);
+});
+const airScn=[
+  {id:'normal',label:'Normal duty',stamp:'RUN',cls:'gold',title:'Normal duty → Primary',desc:'The primary compressor carries the load. Backup and emergency wait on standby — only one compressor runs at a time.',comp:{primary:'on',backup:'standby',emergency:'standby'}},
+  {id:'pdown',label:'Primary unavailable',stamp:'2nd',cls:'amber',title:'Primary down → Backup takes over',desc:'The primary compressor is unavailable (fault or maintenance), so the backup compressor starts and supplies the air instead.',comp:{primary:'fault',backup:'on',emergency:'standby'}},
+  {id:'bothdown',label:'Primary + Backup down',stamp:'SOS',cls:'red',title:'Both down → Emergency compressor',desc:'With both the primary and backup compressors unavailable, the emergency compressor runs to keep compressed air flowing to production.',comp:{primary:'fault',backup:'fault',emergency:'on'}}
+];
+const airBtnWrap=document.getElementById('airScnBtns'),airStamp=document.getElementById('airStamp'),airTitle=document.getElementById('airTitle'),airDesc=document.getElementById('airDesc');
+function applyAir(s){
+  document.querySelectorAll('#airScnBtns .scn-btn').forEach(b=>b.classList.toggle('sel',b.dataset.id===s.id));
+  airStamp.textContent=s.stamp;airStamp.className='stamp '+s.cls;airTitle.textContent=s.title;airDesc.textContent=s.desc;
+  document.querySelectorAll('#compRack .pump').forEach(p=>{
+    p.classList.remove('on','standby','fault');const st=s.comp[p.dataset.comp];const t=p.querySelector('.pstat');
+    if(st==='on'){p.classList.add('on');t.textContent='Running';}
+    else if(st==='standby'){p.classList.add('standby');t.textContent='Standby';}
+    else if(st==='fault'){p.classList.add('fault');t.textContent='Fault';}
+    else t.textContent='Idle';
+  });
+}
+airScn.forEach(s=>{const b=document.createElement('button');b.className='scn-btn';b.dataset.id=s.id;b.textContent=s.label;b.addEventListener('click',()=>applyAir(s));airBtnWrap.appendChild(b);});
+applyAir(airScn[0]);
+
+/* ===== QUESTIONS ===== */
+const questions=[
+  {sys:'w',q:'What is the source of water for the RO system?',a:'The National Water Company (NWC), which supplies the facility through two incoming water lines feeding the site storage tanks.'},
+  {sys:'w',q:'Why does the NWC feed the facility through two lines?',a:'Two lines provide redundancy and enough supply capacity, so the site keeps receiving water even if one line has an issue.'},
+  {sys:'w',q:'What is the function of the Sand Filter?',a:'It removes suspended solids and turbidity from the water before the finer treatment stages and the membranes.'},
+  {sys:'w',q:'What happens if chlorine reaches the RO membranes?',a:'Chlorine chemically attacks and degrades the membranes, causing permanent damage and loss of salt rejection — the failure dechlorination prevents.'},
+  {sys:'w',q:'Why is Anti-Scalant added in the RO system?',a:'To prevent scale and salt deposits from forming inside the system, keeping the membranes clean and extending their service life.'},
+  {sys:'w',q:'What is the function of the High-Pressure Pump at 8 bar?',a:'It raises the water to about 8 bar — the pressure required to push the water through the RO membranes and drive reverse osmosis.'},
+  {sys:'w',q:'What is the difference between drinking and washing water lines?',a:'Drinking water gets full polishing (4 pumps → carbon → cartridge → UV); washing water follows a simpler path (4 pumps → sand filter) for washing and service use.'},
+  {sys:'f',q:'Which pump starts first in the firefighting system?',a:'The jockey pump. It handles small pressure drops and keeps the network pressurized before any main pump is needed.'},
+  {sys:'f',q:'When does the diesel fire pump operate?',a:'Only as an emergency backup — when the electric fire pump fails or there is no electricity. It is never the first pump to run.'},
+  {sys:'f',q:'What happens if there is a fire and electricity is unavailable?',a:'The diesel fire pump starts automatically and supplies the firefighting water, keeping protection active even with no power.'},
+  {sys:'a',q:'Why does the intake air pass through a dust filter first?',a:'To stop dust and airborne particles from entering the compressor, where they could damage the screw elements and contaminate the air.'},
+  {sys:'a',q:'Why is the air compressed in two stages with cooling between them?',a:'Each screw stage raises pressure and temperature. Cooling between and after the stages keeps temperature under control, improves efficiency, and helps remove moisture.'},
+  {sys:'a',q:'What is the purpose of the dehumidification filter?',a:'It removes moisture from the compressed air so that water does not carry over and damage downstream equipment or the pneumatic system.'},
+  {sys:'a',q:'What is the role of the DDP and PDP filters?',a:'They are line filters that further clean and condition the air — the DDP filter before storage, the PDP filter after storage on the way to production — so clean dry air reaches the pneumatic line.'},
+  {sys:'a',q:'Why are there three compressors (primary, backup, emergency)?',a:'For redundancy. Only one runs at a time: the primary carries the load, the backup takes over if it stops, and the emergency unit keeps air flowing if both are down.'},
+  {sys:'a',q:'What are the operating pressure and running temperature of the system?',a:'The pipe pressure is about 7 to 8.4 bar, the compressor capacity is around 483.3 CFM, and the running temperature is between 50 and 60 °C.'}
+];
+const qGrid=document.getElementById('qGrid');
+const qlabel={w:'RO System',f:'Firefighting',a:'Compressed Air'};
+questions.forEach(item=>{
+  const c=document.createElement('div');c.className='qcard '+item.sys;c.tabIndex=0;c.setAttribute('role','button');
+  c.innerHTML=`<div class="qtag">${qlabel[item.sys]}</div><div class="q"><span>${item.q}</span><span class="chev">+</span></div><div class="a-body"><p>${item.a}</p></div>`;
+  const t=()=>c.classList.toggle('open');
+  c.addEventListener('click',t);
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();t();}});
+  qGrid.appendChild(c);
+});
+
+/* ===== REVEAL ===== */
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

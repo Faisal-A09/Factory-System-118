@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MR4 Cooling System — Interactive Digital Twin</title>
+<script src="../vendor/three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>')</script>
+<script>window.THREE||document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>window.THREE||document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>window.addEventListener('DOMContentLoaded',function(){if(!window.THREE){var d=document.createElement('div');d.setAttribute('role','alert');d.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999;background:#2a1113;border:1px solid #ff5163;color:#ffd7db;font:12px monospace;padding:9px 16px;border-radius:10px;max-width:92vw;text-align:center';d.textContent='3D engine failed to load \u2014 check your internet connection. | \u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0645\u062d\u0631\u0643 \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u2014 \u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0627\u062a\u0635\u0627\u0644.';document.body.appendChild(d);}});</script>
+<style>
+:root{
+  --bg:#0b0f14; --panel:#111823; --panel2:#0d141d; --edge:#1e2a3a;
+  --txt:#dce6f2; --dim:#8fa3ba; --faint:#5a6b80;
+  --cyan:#39c4ff; --blue:#2f7df6; --amber:#ffb02e; --red:#ff4d5e; --green:#31d98c; --violet:#9d7bff;
+  --mono:'SF Mono','Cascadia Code','Consolas',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+#c{position:fixed;inset:0;display:block;touch-action:none;cursor:grab}
+#c.grabbing{cursor:grabbing}
+
+/* ---------- HUD frame ---------- */
+.hud{position:fixed;z-index:10;pointer-events:none}
+.hud *{pointer-events:auto}
+
+/* top bar */
+#topbar{top:0;left:0;right:0;display:flex;align-items:center;gap:14px;
+  padding:10px 16px;background:linear-gradient(180deg,rgba(9,13,19,.92),rgba(9,13,19,.55) 75%,transparent);
+  }
+#logo{display:flex;flex-direction:column;line-height:1.1}
+#logo b{font-size:15px;letter-spacing:.4px}
+#logo span{font-size:10px;color:var(--dim);font-family:var(--mono);letter-spacing:1.5px}
+.chip{font-family:var(--mono);font-size:10px;padding:4px 10px;border:1px solid var(--edge);
+  border-radius:20px;color:var(--dim);background:rgba(17,24,35,.7);white-space:nowrap}
+.chip.r22{color:var(--cyan);border-color:rgba(57,196,255,.35)}
+#modebar{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.mbtn{font-family:var(--mono);font-size:11px;letter-spacing:.5px;padding:7px 13px;border-radius:8px;
+  border:1px solid var(--edge);background:rgba(17,24,35,.85);color:var(--dim);cursor:pointer;transition:.18s}
+.mbtn:hover{color:var(--txt);border-color:#31445e}
+.mbtn.on{color:#08131d;background:var(--cyan);border-color:var(--cyan);font-weight:700}
+.mbtn.warn.on{background:var(--amber);border-color:var(--amber)}
+.mbtn.danger.on{background:var(--red);border-color:var(--red);color:#fff}
+
+/* left rail — component tree */
+#rail{top:64px;left:12px;width:228px;max-height:calc(100% - 170px);overflow:auto;
+  background:rgba(13,20,29,.88);border:1px solid var(--edge);border-radius:12px;backdrop-filter:blur(8px)}
+#rail h3{font-size:10px;font-family:var(--mono);letter-spacing:2px;color:var(--faint);
+  padding:12px 14px 8px;text-transform:uppercase}
+.railitem{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;font-size:12.5px;
+  border-left:2px solid transparent;transition:.15s;color:var(--dim)}
+.railitem:hover{background:rgba(57,196,255,.06);color:var(--txt)}
+.railitem.sel{border-left-color:var(--cyan);background:rgba(57,196,255,.1);color:var(--txt)}
+.railitem .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.railitem .st{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--faint)}
+.railitem.alarm .st{color:var(--red);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+
+/* right panel — inspector */
+#inspector{top:64px;right:12px;width:270px;max-height:calc(100% - 170px);overflow:auto;
+  background:rgba(13,20,29,.9);border:1px solid var(--edge);border-radius:12px;backdrop-filter:blur(8px);
+  transform:translateX(290px);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+#inspector.open{transform:none}
+#insp-head{padding:14px 16px 10px;border-bottom:1px solid var(--edge);display:flex;align-items:flex-start;gap:10px}
+#insp-head .ic{width:34px;height:34px;border-radius:9px;background:rgba(57,196,255,.12);
+  display:grid;place-items:center;font-size:16px;flex:none}
+#insp-title{font-size:14px;font-weight:600}
+#insp-sub{font-size:10px;font-family:var(--mono);color:var(--dim);letter-spacing:.5px}
+#insp-close{margin-left:auto;background:none;border:none;color:var(--faint);font-size:16px;cursor:pointer}
+#insp-close:hover{color:var(--txt)}
+#insp-body{padding:12px 16px 16px}
+.kv{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed rgba(30,42,58,.6);font-size:12px}
+.kv b{color:var(--dim);font-weight:500}
+.kv span{font-family:var(--mono);font-size:11.5px;text-align:right}
+.insp-desc{font-size:12px;color:var(--dim);line-height:1.55;margin-top:10px}
+.gauge{margin-top:12px}
+.gauge label{font-size:10px;font-family:var(--mono);color:var(--faint);letter-spacing:1px}
+.gbar{height:8px;border-radius:6px;background:#0a121c;border:1px solid var(--edge);margin-top:4px;overflow:hidden}
+.gfill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--cyan),var(--blue));transition:width .5s}
+
+/* bottom dock — telemetry + legend */
+#dock{bottom:0;left:0;right:0;display:flex;align-items:flex-end;gap:10px;padding:0 12px 12px}
+#telemetry{display:flex;gap:8px;flex-wrap:wrap;background:rgba(13,20,29,.88);border:1px solid var(--edge);
+  border-radius:12px;padding:10px 14px;backdrop-filter:blur(8px)}
+.tcell{min-width:86px}
+.tcell .tl{font-size:9px;font-family:var(--mono);letter-spacing:1.2px;color:var(--faint);text-transform:uppercase}
+.tcell .tv{font-size:16px;font-family:var(--mono);font-weight:600;margin-top:2px}
+.tcell .tv small{font-size:10px;color:var(--dim);font-weight:400}
+.tv.cy{color:var(--cyan)}.tv.am{color:var(--amber)}.tv.gr{color:var(--green)}.tv.rd{color:var(--red)}.tv.vi{color:var(--violet)}
+#legend{margin-left:auto;display:flex;gap:12px;background:rgba(13,20,29,.88);border:1px solid var(--edge);
+  border-radius:12px;padding:10px 14px;backdrop-filter:blur(8px);flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--dim);font-family:var(--mono)}
+.leg i{width:14px;height:4px;border-radius:2px}
+
+/* cycle stepper */
+#cycle{position:fixed;left:50%;transform:translateX(-50%);bottom:86px;z-index:10;display:flex;gap:0;
+  background:rgba(13,20,29,.9);border:1px solid var(--edge);border-radius:12px;overflow:hidden;backdrop-filter:blur(8px)}
+.cstep{padding:9px 16px;font-size:11px;font-family:var(--mono);color:var(--dim);cursor:pointer;
+  border-right:1px solid var(--edge);transition:.18s;white-space:nowrap}
+.cstep:last-child{border-right:none}
+.cstep:hover{color:var(--txt)}
+.cstep.on{background:rgba(57,196,255,.14);color:var(--cyan);font-weight:700}
+.cstep .n{opacity:.55;margin-right:5px}
+
+/* toast + scenario banner */
+#banner{position:fixed;top:64px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:12;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.5px;padding:8px 18px;border-radius:20px;
+  border:1px solid var(--edge);background:rgba(13,20,29,.92);color:var(--dim);opacity:0;transition:.3s;pointer-events:none}
+#banner.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#banner.alert{color:#ffd7db;border-color:rgba(255,77,94,.5);background:rgba(60,15,22,.92)}
+#banner.okay{color:#c9f7e2;border-color:rgba(49,217,140,.5);background:rgba(10,42,30,.92)}
+
+/* SCADA overlay */
+#scada{position:fixed;inset:0;z-index:30;background:rgba(7,11,16,.55);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;padding:20px}
+#scada.open{display:flex}
+#scada-win{width:min(860px,96vw);max-height:92vh;overflow:auto;background:#0d1420;border:1px solid #22354c;
+  border-radius:14px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+#scada-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--edge)}
+#scada-head b{font-family:var(--mono);letter-spacing:1px;font-size:13px}
+#scada-head .lamp{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+#scada-head button{margin-left:auto;background:none;border:1px solid var(--edge);color:var(--dim);
+  border-radius:8px;padding:5px 12px;cursor:pointer;font-family:var(--mono);font-size:11px}
+#scada-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:16px}
+.scell{background:#101a29;border:1px solid var(--edge);border-radius:10px;padding:11px 12px}
+.scell .sl{font-size:9px;font-family:var(--mono);color:var(--faint);letter-spacing:1px;text-transform:uppercase}
+.scell .sv{font-size:17px;font-family:var(--mono);font-weight:700;margin-top:3px}
+.scell .sb{height:5px;border-radius:4px;background:#0a121c;margin-top:7px;overflow:hidden}
+.scell .sbf{height:100%;border-radius:4px;background:var(--cyan);transition:width .6s}
+.scell.warn .sv{color:var(--amber)}.scell.warn .sbf{background:var(--amber)}
+.scell.crit .sv{color:var(--red)}.scell.crit .sbf{background:var(--red)}
+.scell.ok .sv{color:var(--green)}.scell.ok .sbf{background:var(--green)}
+#scada-log{border-top:1px solid var(--edge);padding:12px 18px;max-height:170px;overflow:auto}
+#scada-log h4{font-size:10px;font-family:var(--mono);letter-spacing:2px;color:var(--faint);margin-bottom:8px}
+.logline{font-family:var(--mono);font-size:11px;padding:3px 0;color:var(--dim)}
+.logline.warn{color:var(--amber)}.logline.crit{color:var(--red)}.logline.ok{color:var(--green)}
+
+/* help hint */
+#hint{position:fixed;bottom:86px;left:12px;z-index:9;font-family:var(--mono);font-size:10px;
+  color:var(--faint);background:rgba(13,20,29,.8);border:1px solid var(--edge);border-radius:9px;padding:7px 11px}
+
+/* mobile */
+@media(max-width:820px){
+  #rail{display:none}
+  #inspector{width:min(86vw,270px)}
+  #telemetry{max-width:60vw;overflow-x:auto}
+  #cycle{max-width:94vw;overflow-x:auto;bottom:96px}
+  .chip{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- TOP BAR -->
+<div class="hud" id="topbar">
+  <div id="logo"><b>MR4 · Cooling System</b><span>DIGITAL TWIN · PRODUCTION AREAS</span></div>
+  <span class="chip r22">REFRIGERANT R-22</span>
+  <span class="chip">15 COMPRESSORS</span>
+  <span class="chip">9 CONDENSERS ×3 FANS</span>
+  <div id="modebar">
+    <button class="mbtn on" data-mode="normal">NORMAL</button>
+    <button class="mbtn warn" data-mode="defrost">DEFROST</button>
+    <button class="mbtn danger" data-mode="trip">COMP TRIP</button>
+    <button class="mbtn" data-mode="xray">X-RAY</button>
+    <button class="mbtn" id="scadaBtn">SCADA + AKC</button>
+  </div>
+</div>
+
+<!-- LEFT RAIL -->
+<div class="hud" id="rail">
+  <h3>System Tree</h3>
+  <div id="railList"></div>
+</div>
+
+<!-- INSPECTOR -->
+<div class="hud" id="inspector">
+  <div id="insp-head">
+    <div class="ic" id="insp-ic">◈</div>
+    <div><div id="insp-title">—</div><div id="insp-sub">—</div></div>
+    <button id="insp-close">✕</button>
+  </div>
+  <div id="insp-body"></div>
+</div>
+
+<!-- CYCLE STEPPER -->
+<div id="cycle"></div>
+
+<!-- BOTTOM DOCK -->
+<div class="hud" id="dock">
+  <div id="telemetry">
+    <div class="tcell"><div class="tl">Suction</div><div class="tv cy" id="t-suc">3.2 <small>bar</small></div></div>
+    <div class="tcell"><div class="tl">Discharge</div><div class="tv am" id="t-dis">16.8 <small>bar</small></div></div>
+    <div class="tcell"><div class="tl">Room −18°C</div><div class="tv gr" id="t-room">−18.2 <small>°C</small></div></div>
+    <div class="tcell"><div class="tl">Comps ON</div><div class="tv" id="t-comp">11<small>/15</small></div></div>
+    <div class="tcell"><div class="tl">Cond Fans</div><div class="tv vi" id="t-fans">21<small>/27</small></div></div>
+  </div>
+  <div id="legend">
+    <div class="leg"><i style="background:var(--amber)"></i>HOT GAS</div>
+    <div class="leg"><i style="background:var(--red)"></i>HP LIQUID</div>
+    <div class="leg"><i style="background:var(--violet)"></i>EXPANSION</div>
+    <div class="leg"><i style="background:var(--cyan)"></i>COLD VAPOR</div>
+  </div>
+</div>
+
+<div id="hint">DRAG rotate · WHEEL zoom · RIGHT-DRAG pan · CLICK component</div>
+<div id="banner"></div>
+
+<!-- SCADA -->
+<div id="scada">
+  <div id="scada-win">
+    <div id="scada-head"><span class="lamp"></span><b>SCADA + AKC · MONITORING &amp; CONTROL</b>
+      <button id="scada-close">CLOSE</button></div>
+    <div id="scada-grid"></div>
+    <div id="scada-log"><h4>EVENT LOG</h4><div id="loglines"></div></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   MR4 COOLING SYSTEM — interactive 3D digital twin
+   R-22 · 15 compressors · 9 condensers (3 fans each) · SCADA+AKC
+============================================================ */
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0b0f14);
+scene.fog=new THREE.Fog(0x0b0f14,60,160);
+
+const camera=new THREE.PerspectiveCamera(50,1,.1,400);
+let camTheta=.85,camPhi=1.05,camDist=46,camTarget=V(0,4,2);
+function applyCam(){
+  camera.position.set(
+    camTarget.x+camDist*Math.sin(camPhi)*Math.cos(camTheta),
+    camTarget.y+camDist*Math.cos(camPhi),
+    camTarget.z+camDist*Math.sin(camPhi)*Math.sin(camTheta));
+  camera.lookAt(camTarget);
+}
+function resize(){
+  const w=innerWidth,h=innerHeight;
+  renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize);resize();applyCam();
+
+/* ---------- lights ---------- */
+scene.add(new THREE.AmbientLight(0x8899bb,.5));
+const key=new THREE.DirectionalLight(0xffffff,.9);key.position.set(18,30,12);scene.add(key);
+const rim=new THREE.DirectionalLight(0x39c4ff,.35);rim.position.set(-20,12,-16);scene.add(rim);
+
+/* ---------- materials ---------- */
+const M={
+  floor:new THREE.MeshStandardMaterial({color:0x121a26,roughness:.95}),
+  grid:new THREE.LineBasicMaterial({color:0x1d2a3c}),
+  steel:new THREE.MeshStandardMaterial({color:0x36465c,roughness:.45,metalness:.6}),
+  steelDark:new THREE.MeshStandardMaterial({color:0x232f40,roughness:.5,metalness:.55}),
+  compBody:new THREE.MeshStandardMaterial({color:0x2e6fd1,roughness:.35,metalness:.5}),
+  compTrip:new THREE.MeshStandardMaterial({color:0x8c2531,roughness:.4,metalness:.4,emissive:0x550c14,emissiveIntensity:.6}),
+  condFrame:new THREE.MeshStandardMaterial({color:0x3b4d66,roughness:.4,metalness:.65}),
+  fanBlade:new THREE.MeshStandardMaterial({color:0xbcd2ea,roughness:.3,metalness:.7}),
+  evapBody:new THREE.MeshStandardMaterial({color:0x2c8f9e,roughness:.4,metalness:.45}),
+  recBody:new THREE.MeshStandardMaterial({color:0x7a5fd0,roughness:.35,metalness:.55}),
+  valve:new THREE.MeshStandardMaterial({color:0x9d7bff,roughness:.3,metalness:.6}),
+  roomWall:new THREE.MeshStandardMaterial({color:0x18222f,roughness:.9,transparent:true,opacity:.55}),
+  roomEdge:new THREE.LineBasicMaterial({color:0x39c4ff,transparent:true,opacity:.5}),
+  pipeHot:new THREE.MeshStandardMaterial({color:0xffb02e,emissive:0x7a4d00,emissiveIntensity:.35,roughness:.4}),
+  pipeLiq:new THREE.MeshStandardMaterial({color:0xff4d5e,emissive:0x6b0f18,emissiveIntensity:.3,roughness:.4}),
+  pipeExp:new THREE.MeshStandardMaterial({color:0x9d7bff,emissive:0x3a2378,emissiveIntensity:.3,roughness:.4}),
+  pipeCold:new THREE.MeshStandardMaterial({color:0x39c4ff,emissive:0x0b4a66,emissiveIntensity:.35,roughness:.4}),
+  frost:new THREE.MeshStandardMaterial({color:0xcfe9ff,roughness:.9,transparent:true,opacity:.0}),
+};
+
+/* ---------- floor ---------- */
+const floor=new THREE.Mesh(new THREE.BoxGeometry(90,.5,60),M.floor);
+floor.position.y=-.25;scene.add(floor);
+const gridHelper=new THREE.GridHelper(90,45,0x223349,0x16202e);
+gridHelper.position.y=.01;scene.add(gridHelper);
+
+/* ---------- pick registry ---------- */
+const pickables=[];
+function reg(mesh,id){mesh.traverse?mesh.traverse(o=>{if(o.isMesh){o.userData.pid=id;pickables.push(o);}}):null;
+  if(mesh.isMesh){mesh.userData.pid=id;pickables.push(mesh);}}
+
+/* ============================================================
+   COMPONENT BUILDERS
+============================================================ */
+function makeCompressor(i){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.55,.62,1.5,18),M.compBody.clone());
+  body.position.y=.75;g.add(body);
+  const head=new THREE.Mesh(new THREE.CylinderGeometry(.45,.55,.35,18),M.steel);
+  head.position.y=1.62;g.add(head);
+  const base=new THREE.Mesh(new THREE.BoxGeometry(1.3,.22,1),M.steelDark);
+  base.position.y=.11;g.add(base);
+  const led=new THREE.Mesh(new THREE.SphereGeometry(.09,10,10),
+    new THREE.MeshBasicMaterial({color:0x31d98c}));
+  led.position.set(.4,1.35,.4);g.add(led);
+  g.userData={led,body,idx:i};
+  return g;
+}
+function makeCondenser(){
+  const g=new THREE.Group();
+  const frame=new THREE.Mesh(new THREE.BoxGeometry(4.6,1.15,1.9),M.condFrame);
+  frame.position.y=2.1;g.add(frame);
+  const legsPos=[[-2,.95],[2,.95],[-2,-.95],[2,-.95]];
+  legsPos.forEach(p=>{const leg=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,2.1,8),M.steelDark);
+    leg.position.set(p[0],1.05,p[1]);g.add(leg);});
+  const fans=[];
+  for(let f=0;f<3;f++){
+    const fg=new THREE.Group();
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.55,.07,8,24),M.steel);
+    ring.rotation.x=Math.PI/2;fg.add(ring);
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.16,10),M.steelDark);fg.add(hub);
+    const bl=new THREE.Group();
+    for(let b=0;b<3;b++){
+      const blade=new THREE.Mesh(new THREE.BoxGeometry(.5,.03,.14),M.fanBlade);
+      blade.position.x=.28;
+      const piv=new THREE.Group();piv.add(blade);piv.rotation.y=b*Math.PI*2/3;
+      bl.add(piv);
+    }
+    fg.add(bl);
+    fg.position.set(-1.5+f*1.5,2.75,0);
+    fg.userData={blades:bl};
+    g.add(fg);fans.push(fg);
+  }
+  g.userData={fans};
+  return g;
+}
+function makeReceiver(){
+  const g=new THREE.Group();
+  const tank=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,3.4,20),M.recBody);
+  tank.rotation.z=Math.PI/2;tank.position.y=1.2;g.add(tank);
+  [-1.7,1.7].forEach(x=>{const cap=new THREE.Mesh(new THREE.SphereGeometry(.8,16,12),M.recBody);
+    cap.position.set(x,1.2,0);g.add(cap);});
+  [[-1.1],[1.1]].forEach(p=>{const leg=new THREE.Mesh(new THREE.BoxGeometry(.18,.8,.9),M.steelDark);
+    leg.position.set(p[0],.4,0);g.add(leg);});
+  const glass=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.5,10),
+    new THREE.MeshStandardMaterial({color:0xbfe8ff,transparent:true,opacity:.8}));
+  glass.position.set(0,1.85,.75);g.add(glass);
+  return g;
+}
+function makeValve(){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.32,14,12),M.valve);
+  body.position.y=.32;g.add(body);
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.5,8),M.steel);
+  stem.position.y=.72;g.add(stem);
+  const wheel=new THREE.Mesh(new THREE.TorusGeometry(.2,.045,8,20),M.steel);
+  wheel.rotation.x=Math.PI/2;wheel.position.y=.98;g.add(wheel);
+  return g;
+}
+function makeEvaporator(){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(3.4,1,1.2),M.evapBody);
+  body.position.y=2.6;g.add(body);
+  for(let f=0;f<2;f++){
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.34,.05,8,20),M.steel);
+    ring.position.set(-.8+f*1.6,2.6,.65);g.add(ring);
+    const bl=new THREE.Group();
+    for(let b=0;b<3;b++){
+      const blade=new THREE.Mesh(new THREE.BoxGeometry(.3,.02,.1),M.fanBlade);
+      blade.position.x=.16;
+      const piv=new THREE.Group();piv.add(blade);piv.rotation.z=b*Math.PI*2/3;
+      bl.add(piv);
+    }
+    bl.position.set(-.8+f*1.6,2.6,.65);
+    bl.userData.isEvapFan=true;
+    g.add(bl);
+  }
+  const frost=new THREE.Mesh(new THREE.BoxGeometry(3.5,1.08,1.28),M.frost.clone());
+  frost.position.y=2.6;g.add(frost);
+  g.userData.frost=frost;
+  const drip=new THREE.Mesh(new THREE.BoxGeometry(3.4,.08,1.3),M.steelDark);
+  drip.position.y=2.02;g.add(drip);
+  return g;
+}
+
+/* ============================================================
+   LAYOUT
+============================================================ */
+const roomGroup=new THREE.Group();scene.add(roomGroup);
+
+/* --- compressor rack: 15 compressors, 3 rows of 5 --- */
+const compGroup=new THREE.Group();compGroup.position.set(-13,0,8);scene.add(compGroup);
+const compressors=[];
+for(let i=0;i<15;i++){
+  const row=Math.floor(i/5),col=i%5;
+  const c=makeCompressor(i);
+  c.position.set(col*2.2,0,row*2.4);
+  compGroup.add(c);compressors.push(c);
+  reg(c,'comp');
+}
+/* rack plinth */
+const plinth=new THREE.Mesh(new THREE.BoxGeometry(12.5,.3,8.4),M.steelDark);
+plinth.position.set(-13+4.4,-.15+.15,8+2.4);scene.add(plinth);
+
+/* suction & discharge headers */
+function pipe(points,mat,r=.14){
+  const curve=new THREE.CatmullRomCurve3(points);
+  const geo=new THREE.TubeGeometry(curve,Math.max(24,points.length*10),r,10,false);
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.userData.curve=curve;
+  scene.add(mesh);return mesh;
+}
+/* discharge header: rack -> condensers (hot gas) */
+const pipeHot=pipe([V(-8.5,2.2,10),V(-4,4.4,8),V(2,5.6,-2),V(8,5.2,-8),V(12.5,4.4,-9.5)],M.pipeHot,.17);
+/* condensers -> receiver (HP liquid) */
+const pipeLiq=pipe([V(12.5,2.4,-9.5),V(10,1.6,-3),V(7.5,1.3,2.5)],M.pipeLiq,.15);
+/* receiver -> expansion valve */
+const pipeLiq2=pipe([V(7.5,1.3,2.5),V(4.5,1.1,6.5),V(1.8,.9,9.2)],M.pipeLiq,.13);
+/* expansion -> evaporators (expansion / low pressure liquid) */
+const pipeExp=pipe([V(1.8,.9,9.2),V(-.5,1.8,11.5),V(-2.4,2.6,13)],M.pipeExp,.12);
+/* evaporators -> rack suction (cold vapor) */
+const pipeCold=pipe([V(-2.4,2.6,15),V(-6,2.4,14),V(-10,2.2,11.5),V(-12,2,10.4)],M.pipeCold,.16);
+
+/* --- condensers: 9 units, 3×3 grid on "roof" platform --- */
+const condGroup=new THREE.Group();condGroup.position.set(9,0,-14);scene.add(condGroup);
+const condensers=[];
+for(let i=0;i<9;i++){
+  const row=Math.floor(i/3),col=i%3;
+  const cd=makeCondenser();
+  cd.position.set(col*5.4,0,row*3.1);
+  condGroup.add(cd);condensers.push(cd);
+  reg(cd,'cond');
+}
+const condPad=new THREE.Mesh(new THREE.BoxGeometry(17.5,.25,10.4),M.steelDark);
+condPad.position.set(9+5.4,.12,-14+3.1);scene.add(condPad);
+
+/* --- receiver + expansion valve --- */
+const receiver=makeReceiver();receiver.position.set(7.5,0,2.5);scene.add(receiver);reg(receiver,'rec');
+const valve=makeValve();valve.position.set(1.8,0,9.2);scene.add(valve);reg(valve,'valve');
+
+/* --- cold room with 2 evaporators --- */
+const room=new THREE.Group();room.position.set(-4,0,14);scene.add(room);
+const shell=new THREE.Mesh(new THREE.BoxGeometry(9,4.4,6),M.roomWall);
+shell.position.y=2.2;room.add(shell);
+const edges=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(9,4.4,6)),M.roomEdge);
+edges.position.y=2.2;room.add(edges);
+const evap1=makeEvaporator();evap1.position.set(-2,0,0);room.add(evap1);reg(evap1,'evap');
+const evap2=makeEvaporator();evap2.position.set(2.4,0,0);room.add(evap2);reg(evap2,'evap');
+const evaporators=[evap1,evap2];
+
+/* room label sprite */
+function label(text,x,y,z,color='#39c4ff'){
+  const cv=document.createElement('canvas');cv.width=256;cv.height=64;
+  const cx=cv.getContext('2d');
+  cx.fillStyle='rgba(13,20,29,.85)';cx.fillRect(0,0,256,64);
+  cx.strokeStyle=color;cx.lineWidth=2;cx.strokeRect(1,1,254,62);
+  cx.fillStyle=color;cx.font='bold 22px monospace';cx.textAlign='center';cx.textBaseline='middle';
+  cx.fillText(text,128,32);
+  const tex=new THREE.CanvasTexture(cv);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));
+  sp.scale.set(5.4,1.35,1);sp.position.set(x,y,z);scene.add(sp);
+  return sp;
+}
+label('COMPRESSOR RACK ×15',-8.5,4.6,10.5);
+label('CONDENSERS ×9 · 27 FANS',14.5,5.6,-11,'#ffb02e');
+label('RECEIVER',7.5,3.4,2.5,'#9d7bff');
+label('EXPANSION VALVE',1.8,2.2,9.2,'#9d7bff');
+label('COLD ROOM −18°C',-4,5.4,14,'#31d98c');
+
+/* ============================================================
+   REFRIGERANT FLOW PARTICLES
+============================================================ */
+function makeFlow(pipeMesh,color,count,speed){
+  const group=new THREE.Group();scene.add(group);
+  const mat=new THREE.MeshBasicMaterial({color});
+  const parts=[];
+  for(let i=0;i<count;i++){
+    const m=new THREE.Mesh(new THREE.SphereGeometry(.1,8,8),mat);
+    m.userData.t=i/count;group.add(m);parts.push(m);
+  }
+  return {curve:pipeMesh.userData.curve,parts,speed,group};
+}
+const flows=[
+  makeFlow(pipeHot,0xffb02e,14,.045),
+  makeFlow(pipeLiq,0xff4d5e,7,.04),
+  makeFlow(pipeLiq2,0xff4d5e,5,.04),
+  makeFlow(pipeExp,0x9d7bff,5,.05),
+  makeFlow(pipeCold,0x39c4ff,10,.05),
+];
+
+/* ============================================================
+   STATE / DATA
+============================================================ */
+const state={
+  mode:'normal',          // normal | defrost | trip | xray
+  compOn:11, fansOn:21,
+  suction:3.2, discharge:16.8, roomT:-18.2,
+  frostLevel:0, tripIdx:4,
+  selected:null,
+};
+
+const COMPONENTS={
+  comp:{icon:'⛽',title:'Compressor Rack',sub:'15 UNITS · R-22 · PARALLEL RACK',
+    desc:'Fifteen compressors work in parallel on the R-22 circuit. The rack modulates how many run based on cooling demand from the production areas. Suction gas returns cold from the evaporators; each compressor raises it to high-pressure hot gas.',
+    kv:[['Refrigerant','R-22'],['Units','15 parallel'],['Control','SCADA + AKC staging'],['Suction','≈ 3.2 bar'],['Discharge','≈ 16.8 bar']],
+    gauge:['LOAD','73%']},
+  cond:{icon:'🌀',title:'Condenser Bank',sub:'9 CONDENSERS · 3 FANS EACH (27 TOTAL)',
+    desc:'Nine air-cooled condensers reject the heat absorbed from the rooms plus compressor work. Each unit carries three fans staged by head-pressure control. Hot gas enters, condenses to high-pressure liquid, and drains toward the receiver.',
+    kv:[['Units','9'],['Fans','3 per unit · 27 total'],['Duty','Heat rejection'],['In','Hot gas (discharge)'],['Out','HP liquid']],
+    gauge:['FAN STAGE','78%']},
+  rec:{icon:'🛢',title:'Liquid Receiver',sub:'HP LIQUID BUFFER · SIGHT GLASS',
+    desc:'Collects condensed high-pressure liquid R-22 and buffers charge variations between load changes and defrost cycles, ensuring a solid liquid column feeds the expansion devices.',
+    kv:[['Fluid','R-22 liquid'],['Function','Charge buffer'],['Level','~62%'],['Out','Liquid line → expansion']],
+    gauge:['LEVEL','62%']},
+  valve:{icon:'🎛',title:'Expansion Device',sub:'PRESSURE DROP · TEMPERATURE DROP',
+    desc:'Meters high-pressure liquid into the evaporators. The sudden pressure drop flashes part of the liquid and chills the mixture, feeding the coils with cold low-pressure refrigerant.',
+    kv:[['In','HP liquid ~16.8 bar'],['Out','LP mix ~3.4 bar'],['Superheat target','5–7 K'],['Type','TXV / EEV (AKC)']],
+    gauge:['OPENING','54%']},
+  evap:{icon:'❄',title:'Evaporator (Cold Room)',sub:'PRODUCTION AREA COOLING COILS',
+    desc:'Inside the −18 °C room, evaporator coils absorb heat as R-22 boils. Fans circulate air across the coils. Frost gradually builds on the fins and is removed during scheduled defrost cycles.',
+    kv:[['Room setpoint','−18 °C'],['Coils','2 units shown'],['Refrigerant','R-22 boiling'],['Defrost','Scheduled / on-demand']],
+    gauge:['FROST','12%']},
+};
+
+const RAIL=[
+  {id:'comp',name:'Compressor Rack ×15',color:'#2f7df6'},
+  {id:'cond',name:'Condensers ×9 (27 fans)',color:'#ffb02e'},
+  {id:'rec',name:'Liquid Receiver',color:'#9d7bff'},
+  {id:'valve',name:'Expansion Device',color:'#9d7bff'},
+  {id:'evap',name:'Evaporators · Cold Room',color:'#31d98c'},
+];
+const railList=document.getElementById('railList');
+RAIL.forEach(r=>{
+  const d=document.createElement('div');d.className='railitem';d.dataset.id=r.id;
+  d.innerHTML=`<span class="dot" style="background:${r.color}"></span>${r.name}<span class="st">OK</span>`;
+  d.onclick=()=>selectComp(r.id,true);
+  railList.appendChild(d);
+});
+
+/* cycle stepper */
+const CYCLE=[
+  {id:'comp',n:'1',t:'COMPRESSION'},
+  {id:'cond',n:'2',t:'CONDENSATION'},
+  {id:'rec',n:'3',t:'RECEIVER'},
+  {id:'valve',n:'4',t:'EXPANSION'},
+  {id:'evap',n:'5',t:'EVAPORATION'},
+];
+const cycleEl=document.getElementById('cycle');
+CYCLE.forEach(c=>{
+  const d=document.createElement('div');d.className='cstep';d.dataset.id=c.id;
+  d.innerHTML=`<span class="n">${c.n}</span>${c.t}`;
+  d.onclick=()=>selectComp(c.id,true);
+  cycleEl.appendChild(d);
+});
+
+/* focus targets for camera fly */
+const FOCUS={
+  comp:{target:V(-8.5,1.5,10.4),dist:22},
+  cond:{target:V(14.5,2.5,-11),dist:26},
+  rec:{target:V(7.5,1.3,2.5),dist:14},
+  valve:{target:V(1.8,.8,9.2),dist:11},
+  evap:{target:V(-4,2.4,14),dist:20},
+};
+let camAnim=null;
+function flyTo(f){
+  camAnim={t:0,fromT:camTarget.clone(),toT:f.target.clone(),fromD:camDist,toD:f.dist};
+}
+
+/* inspector */
+const insp=document.getElementById('inspector');
+function selectComp(id,fly){
+  state.selected=id;
+  const c=COMPONENTS[id];
+  document.getElementById('insp-ic').textContent=c.icon;
+  document.getElementById('insp-title').textContent=c.title;
+  document.getElementById('insp-sub').textContent=c.sub;
+  let html=c.kv.map(k=>`<div class="kv"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('');
+  html+=`<div class="insp-desc">${c.desc}</div>`;
+  if(c.gauge){html+=`<div class="gauge"><label>${c.gauge[0]}</label><div class="gbar"><div class="gfill" style="width:${c.gauge[1]}"></div></div></div>`;}
+  document.getElementById('insp-body').innerHTML=html;
+  insp.classList.add('open');
+  document.querySelectorAll('.railitem').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));
+  document.querySelectorAll('.cstep').forEach(r=>r.classList.toggle('on',r.dataset.id===id));
+  if(fly&&FOCUS[id])flyTo(FOCUS[id]);
+}
+document.getElementById('insp-close').onclick=()=>{insp.classList.remove('open');
+  document.querySelectorAll('.railitem').forEach(r=>r.classList.remove('sel'));
+  document.querySelectorAll('.cstep').forEach(r=>r.classList.remove('on'));};
+
+/* ============================================================
+   MODES / SCENARIOS
+============================================================ */
+const banner=document.getElementById('banner');
+let bannerTimer=null;
+function toast(msg,cls=''){
+  banner.textContent=msg;banner.className=cls?cls+' show':'show';
+  banner.id='banner';
+  clearTimeout(bannerTimer);
+  bannerTimer=setTimeout(()=>banner.classList.remove('show'),3400);
+}
+function setMode(m){
+  state.mode=m;
+  document.querySelectorAll('.mbtn[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  /* reset */
+  compressors.forEach(c=>{c.userData.body.material=M.compBody;c.userData.led.material.color.set(0x31d98c);});
+  evaporators.forEach(e=>e.userData.frost.material.opacity=0);
+  M.roomWall.opacity=.55;
+  document.querySelector('.railitem[data-id="comp"]').classList.remove('alarm');
+  document.querySelector('.railitem[data-id="evap"]').classList.remove('alarm');
+  document.querySelectorAll('.railitem .st').forEach(s=>s.textContent='OK');
+
+  if(m==='normal'){
+    state.compOn=11;state.fansOn=21;state.suction=3.2;state.discharge=16.8;
+    toast('NORMAL OPERATION · R-22 CYCLE RUNNING','okay');
+  }
+  if(m==='defrost'){
+    state.compOn=8;state.fansOn=15;state.suction=3.6;state.discharge=15.2;
+    evaporators.forEach(e=>e.userData.frost.material.opacity=.55);
+    document.querySelector('.railitem[data-id="evap"] .st').textContent='DEFROST';
+    toast('DEFROST CYCLE · EVAPORATOR COILS CLEARING FROST');
+  }
+  if(m==='trip'){
+    state.compOn=9;state.fansOn=19;state.suction=3.9;state.discharge=17.9;
+    const t=compressors[state.tripIdx];
+    t.userData.body.material=M.compTrip;t.userData.led.material.color.set(0xff4d5e);
+    const t2=compressors[state.tripIdx+6];
+    t2.userData.body.material=M.compTrip;t2.userData.led.material.color.set(0xff4d5e);
+    const ri=document.querySelector('.railitem[data-id="comp"]');
+    ri.classList.add('alarm');ri.querySelector('.st').textContent='TRIP×2';
+    toast('ALARM · 2 COMPRESSORS TRIPPED — RACK COMPENSATING','alert');
+  }
+  if(m==='xray'){
+    M.roomWall.opacity=.15;
+    toast('X-RAY VIEW · STRUCTURES TRANSPARENT');
+  }
+  logEvent(m);
+}
+document.querySelectorAll('.mbtn[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+
+/* ============================================================
+   SCADA + AKC PANEL
+============================================================ */
+const scada=document.getElementById('scada');
+document.getElementById('scadaBtn').onclick=()=>{scada.classList.add('open');renderScada();};
+document.getElementById('scada-close').onclick=()=>scada.classList.remove('open');
+scada.addEventListener('click',e=>{if(e.target===scada)scada.classList.remove('open');});
+
+function renderScada(){
+  const g=document.getElementById('scada-grid');
+  const cells=[
+    {l:'SUCTION PRESSURE',v:state.suction.toFixed(1)+' bar',p:state.suction/6*100,cls:''},
+    {l:'DISCHARGE PRESSURE',v:state.discharge.toFixed(1)+' bar',p:state.discharge/22*100,cls:state.discharge>17.5?'warn':''},
+    {l:'ROOM TEMP',v:state.roomT.toFixed(1)+' °C',p:Math.min(100,Math.abs(state.roomT)/25*100),cls:state.roomT>-15?'warn':'ok'},
+    {l:'COMPRESSORS ON',v:state.compOn+' / 15',p:state.compOn/15*100,cls:state.mode==='trip'?'crit':''},
+    {l:'CONDENSER FANS',v:state.fansOn+' / 27',p:state.fansOn/27*100,cls:''},
+    {l:'RECEIVER LEVEL',v:'62 %',p:62,cls:''},
+    {l:'SUPERHEAT',v:'6.1 K',p:61,cls:'ok'},
+    {l:'SUBCOOLING',v:'4.3 K',p:43,cls:'ok'},
+    {l:'AKC VALVE OPENING',v:'54 %',p:54,cls:''},
+    {l:'DEFROST STATUS',v:state.mode==='defrost'?'ACTIVE':'IDLE',p:state.mode==='defrost'?100:0,cls:state.mode==='defrost'?'warn':''},
+    {l:'ALARMS',v:state.mode==='trip'?'2 ACTIVE':'0',p:state.mode==='trip'?100:0,cls:state.mode==='trip'?'crit':'ok'},
+    {l:'R-22 CIRCUIT',v:'SEALED',p:100,cls:'ok'},
+  ];
+  g.innerHTML=cells.map(c=>`<div class="scell ${c.cls}"><div class="sl">${c.l}</div>
+    <div class="sv">${c.v}</div><div class="sb"><div class="sbf" style="width:${c.p}%"></div></div></div>`).join('');
+}
+const loglines=document.getElementById('loglines');
+function logEvent(mode){
+  const t=new Date().toTimeString().slice(0,8);
+  const map={
+    normal:['ok','SYSTEM NORMAL — staging per demand'],
+    defrost:['warn','DEFROST initiated on cold-room evaporators'],
+    trip:['crit','COMPRESSOR TRIP ×2 — high discharge protection'],
+    xray:['','View mode changed to X-RAY'],
+  };
+  const e=map[mode]||['',mode];
+  const d=document.createElement('div');d.className='logline '+e[0];
+  d.textContent=`[${t}] ${e[1]}`;
+  loglines.prepend(d);
+  while(loglines.children.length>26)loglines.lastChild.remove();
+  if(scada.classList.contains('open'))renderScada();
+}
+
+/* ============================================================
+   INTERACTION — orbit / pan / zoom / pick
+============================================================ */
+let dragging=false,panning=false,px=0,py=0,moved=0;
+canvas.addEventListener('pointerdown',e=>{
+  dragging=e.button===0;panning=e.button===2;
+  px=e.clientX;py=e.clientY;moved=0;
+  canvas.classList.add('grabbing');canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!dragging&&!panning)return;
+  const dx=e.clientX-px,dy=e.clientY-py;px=e.clientX;py=e.clientY;moved+=Math.abs(dx)+Math.abs(dy);
+  if(dragging){camTheta+=dx*.005;camPhi=Math.max(.25,Math.min(1.45,camPhi-dy*.004));}
+  if(panning){
+    const right=V(Math.sin(camTheta-Math.PI/2),0,Math.cos(camTheta-Math.PI/2));
+    camTarget.addScaledVector(right,-dx*.03);
+    camTarget.y=Math.max(0,camTarget.y+dy*.03);
+  }
+  applyCam();
+});
+canvas.addEventListener('pointerup',e=>{
+  canvas.classList.remove('grabbing');
+  if(moved<6&&e.button===0)pick(e.clientX,e.clientY);
+  dragging=panning=false;
+});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  camDist=Math.max(8,Math.min(110,camDist+e.deltaY*.03));applyCam();
+},{passive:false});
+/* touch pinch */
+let pinchD=0;
+canvas.addEventListener('touchmove',e=>{
+  if(e.touches.length===2){
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    if(pinchD)camDist=Math.max(8,Math.min(110,camDist+(pinchD-d)*.08));
+    pinchD=d;applyCam();e.preventDefault();
+  }
+},{passive:false});
+canvas.addEventListener('touchend',()=>pinchD=0);
+
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+function pick(x,y){
+  mouse.x=(x/innerWidth)*2-1;mouse.y=-(y/innerHeight)*2+1;
+  ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects(pickables,false);
+  if(hit.length){selectComp(hit[0].object.userData.pid,true);}
+}
+
+/* ============================================================
+   TELEMETRY SIMULATION
+============================================================ */
+function jitter(v,a){return v+(Math.random()-.5)*a;}
+setInterval(()=>{
+  const s=jitter(state.suction,.15),d=jitter(state.discharge,.3);
+  let rt=state.mode==='defrost'?jitter(-16.4,.4):state.mode==='trip'?jitter(-17.1,.5):jitter(-18.2,.3);
+  document.getElementById('t-suc').innerHTML=s.toFixed(1)+' <small>bar</small>';
+  document.getElementById('t-dis').innerHTML=d.toFixed(1)+' <small>bar</small>';
+  document.getElementById('t-room').innerHTML=rt.toFixed(1)+' <small>°C</small>';
+  document.getElementById('t-comp').innerHTML=state.compOn+'<small>/15</small>';
+  document.getElementById('t-fans').innerHTML=state.fansOn+'<small>/27</small>';
+  state.roomT=rt;
+  if(scada.classList.contains('open'))renderScada();
+},1400);
+
+/* ============================================================
+   RENDER LOOP
+============================================================ */
+const clock=new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=clock.getDelta(),t=clock.elapsedTime;
+
+  /* camera fly animation */
+  if(camAnim){
+    camAnim.t+=dt*1.6;
+    const k=Math.min(1,camAnim.t),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    camTarget.lerpVectors(camAnim.fromT,camAnim.toT,e);
+    camDist=camAnim.fromD+(camAnim.toD-camAnim.fromD)*e;
+    applyCam();
+    if(k>=1)camAnim=null;
+  }
+
+  /* condenser fans spin (speed depends on mode) */
+  const fanSpeed=state.mode==='trip'?14:state.mode==='defrost'?7:10;
+  condensers.forEach((cd,i)=>{
+    cd.userData.fans.forEach((f,fi)=>{
+      const on=(i*3+fi)<state.fansOn;
+      if(on)f.userData.blades.rotation.y+=dt*fanSpeed;
+    });
+  });
+  /* evaporator fans */
+  evaporators.forEach(ev=>{
+    ev.children.forEach(ch=>{
+      if(ch.userData&&ch.userData.isEvapFan&&state.mode!=='defrost')ch.rotation.z+=dt*12;
+    });
+  });
+  /* compressor subtle vibration */
+  compressors.forEach((c,i)=>{
+    const on=i<state.compOn&&!(state.mode==='trip'&&(i===state.tripIdx||i===state.tripIdx+6));
+    c.position.y=on?Math.sin(t*30+i)*0.012:0;
+  });
+
+  /* flow particles */
+  const flowSpeed=state.mode==='defrost'?.6:state.mode==='trip'?1.25:1;
+  flows.forEach(f=>{
+    f.parts.forEach(p=>{
+      p.userData.t=(p.userData.t+f.speed*dt*flowSpeed)%1;
+      f.curve.getPointAt(p.userData.t,p.position);
+    });
+  });
+
+  renderer.render(scene,camera);
+}
+animate();
+
+/* init */
+setMode('normal');
+selectComp('comp',false);
+insp.classList.remove('open');
+</script>
+</body>
+</html>
